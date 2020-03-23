@@ -13,6 +13,6 @@ service ReadOnlyService {
 message ReadEventsRequest { string AggregateID = 1; }
 
 message ReadEventsResponse {
-  string AggregateID = 1;
+  string aggregate_id = 1;
   repeated happendb.messaging.Event events = 2;
 }
