@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pb "github.com/happendb/happendb/proto/gen/go/store"
+	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -16,7 +16,7 @@ type ReadOnlyClient struct {
 
 // NewReadOnlyClient ...
 func NewReadOnlyClient() (*ReadOnlyClient, error) {
-	conn, err := grpc.Dial("localhost:1232", grpc.WithInsecure())
+	conn, err := grpc.Dial("localhost:3000", grpc.WithInsecure())
 
 	if err != nil {
 		return nil, err

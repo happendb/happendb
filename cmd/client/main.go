@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/happendb/happendb/internal/client"
-	pb "github.com/happendb/happendb/proto/gen/go/store"
+	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func run(args []string, stdin io.Reader, stdout io.Writer) error {
 	}
 
 	client.ReadEvents(context.Background(), &pb.ReadEventsRequest{
-		AggregateID: args[0],
+		AggregateId: args[0],
 	})
 
 	return nil

@@ -7,7 +7,7 @@ import (
 	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/postgres"
-	pb "github.com/happendb/happendb/proto/gen/go/store"
+	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -55,7 +55,7 @@ func (s ReadOnlyServer) ReadEvents(ctx context.Context, req *pb.ReadEventsReques
 		events []*messaging.Event
 	)
 
-	if stream, err = s.store.ReadEvents(req.GetAggregateID()); err != nil {
+	if stream, err = s.store.ReadEvents(req.GetAggregateId()); err != nil {
 		return nil, err
 	}
 
@@ -69,7 +69,7 @@ func (s ReadOnlyServer) ReadEvents(ctx context.Context, req *pb.ReadEventsReques
 	}).Debugf("%T::ReadEvents(%#v)\n", s, req)
 
 	return &pb.ReadEventsResponse{
-		AggregateId: req.GetAggregateID(),
+		AggregateId: req.GetAggregateId(),
 		Events:      events,
 	}, nil
 }

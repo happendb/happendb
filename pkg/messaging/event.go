@@ -2,7 +2,7 @@ package messaging
 
 import (
 	"github.com/golang/protobuf/ptypes/any"
-	pb "github.com/happendb/happendb/proto/gen/go/messaging"
+	pb "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 )
 
 // Event ...

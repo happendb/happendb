@@ -1,7 +1,5 @@
 package messaging
 
-import "github.com/happendb/happendb/proto/gen/go/messaging"
-
 // EventStream ...
 type EventStream struct {
 	name   string
@@ -17,7 +15,7 @@ func NewEventStream(name string) *EventStream {
 }
 
 // Append ...
-func (s *EventStream) Append(e ...*messaging.Event) {
+func (s *EventStream) Append(e ...*Event) {
 	s.events = append(s.events, e...)
 }
 

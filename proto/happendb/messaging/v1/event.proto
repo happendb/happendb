@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package happendb.messaging;
+package happendb.messaging.v1;
 
 import "google/protobuf/any.proto";
 
-option go_package = "github.com/happendb/happendb/proto/gen/go/messaging";
+option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1";
 
 message Event {
   string id = 1;

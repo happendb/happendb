@@ -1,0 +1,828 @@
+{
+    "file": [
+        {
+            "name": "google/protobuf/any.proto",
+            "package": "google.protobuf",
+            "messageType": [
+                {
+                    "name": "Any",
+                    "field": [
+                        {
+                            "name": "type_url",
+                            "number": 1,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_STRING",
+                            "jsonName": "typeUrl"
+                        },
+                        {
+                            "name": "value",
+                            "number": 2,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_BYTES",
+                            "jsonName": "value"
+                        }
+                    ]
+                }
+            ],
+            "options": {
+                "javaPackage": "com.google.protobuf",
+                "javaOuterClassname": "AnyProto",
+                "javaMultipleFiles": true,
+                "goPackage": "github.com/golang/protobuf/ptypes/any",
+                "objcClassPrefix": "GPB",
+                "csharpNamespace": "Google.Protobuf.WellKnownTypes"
+            },
+            "syntax": "proto3"
+        },
+        {
+            "name": "happendb/messaging/v1/event.proto",
+            "package": "happendb.messaging.v1",
+            "dependency": [
+                "google/protobuf/any.proto"
+            ],
+            "messageType": [
+                {
+                    "name": "Event",
+                    "field": [
+                        {
+                            "name": "id",
+                            "number": 1,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_STRING",
+                            "jsonName": "id"
+                        },
+                        {
+                            "name": "aggregate_id",
+                            "number": 2,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_STRING",
+                            "jsonName": "aggregateId"
+                        },
+                        {
+                            "name": "type",
+                            "number": 3,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_STRING",
+                            "jsonName": "type"
+                        },
+                        {
+                            "name": "payload",
+                            "number": 4,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_MESSAGE",
+                            "typeName": ".google.protobuf.Any",
+                            "jsonName": "payload"
+                        }
+                    ]
+                }
+            ],
+            "options": {
+                "goPackage": "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
+            },
+            "sourceCodeInfo": {
+                "location": [
+                    {
+                        "path": [],
+                        "span": [
+                            0,
+                            0,
+                            13,
+                            1
+                        ]
+                    },
+                    {
+                        "path": [
+                            12
+                        ],
+                        "span": [
+                            0,
+                            0,
+                            18
+                        ]
+                    },
+                    {
+                        "path": [
+                            2
+                        ],
+                        "span": [
+                            2,
+                            0,
+                            30
+                        ]
+                    },
+                    {
+                        "path": [
+                            3,
+                            0
+                        ],
+                        "span": [
+                            4,
+                            0,
+                            35
+                        ]
+                    },
+                    {
+                        "path": [
+                            8
+                        ],
+                        "span": [
+                            6,
+                            0,
+                            86
+                        ]
+                    },
+                    {
+                        "path": [
+                            8,
+                            11
+                        ],
+                        "span": [
+                            6,
+                            0,
+                            86
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0
+                        ],
+                        "span": [
+                            8,
+                            0,
+                            13,
+                            1
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            1
+                        ],
+                        "span": [
+                            8,
+                            8,
+                            13
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0
+                        ],
+                        "span": [
+                            9,
+                            2,
+                            16
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0,
+                            5
+                        ],
+                        "span": [
+                            9,
+                            2,
+                            8
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0,
+                            1
+                        ],
+                        "span": [
+                            9,
+                            9,
+                            11
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0,
+                            3
+                        ],
+                        "span": [
+                            9,
+                            14,
+                            15
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            1
+                        ],
+                        "span": [
+                            10,
+                            2,
+                            26
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            1,
+                            5
+                        ],
+                        "span": [
+                            10,
+                            2,
+                            8
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            1,
+                            1
+                        ],
+                        "span": [
+                            10,
+                            9,
+                            21
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            1,
+                            3
+                        ],
+                        "span": [
+                            10,
+                            24,
+                            25
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            2
+                        ],
+                        "span": [
+                            11,
+                            2,
+                            18
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            2,
+                            5
+                        ],
+                        "span": [
+                            11,
+                            2,
+                            8
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            2,
+                            1
+                        ],
+                        "span": [
+                            11,
+                            9,
+                            13
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            2,
+                            3
+                        ],
+                        "span": [
+                            11,
+                            16,
+                            17
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            3
+                        ],
+                        "span": [
+                            12,
+                            2,
+                            34
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            3,
+                            6
+                        ],
+                        "span": [
+                            12,
+                            2,
+                            21
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            3,
+                            1
+                        ],
+                        "span": [
+                            12,
+                            22,
+                            29
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            3,
+                            3
+                        ],
+                        "span": [
+                            12,
+                            32,
+                            33
+                        ]
+                    }
+                ]
+            },
+            "syntax": "proto3"
+        },
+        {
+            "name": "happendb/store/v1/read_only.proto",
+            "package": "happendb.store.v1",
+            "dependency": [
+                "happendb/messaging/v1/event.proto"
+            ],
+            "messageType": [
+                {
+                    "name": "ReadEventsRequest",
+                    "field": [
+                        {
+                            "name": "aggregate_id",
+                            "number": 1,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_STRING",
+                            "jsonName": "aggregateId"
+                        }
+                    ]
+                },
+                {
+                    "name": "ReadEventsResponse",
+                    "field": [
+                        {
+                            "name": "aggregate_id",
+                            "number": 1,
+                            "label": "LABEL_OPTIONAL",
+                            "type": "TYPE_STRING",
+                            "jsonName": "aggregateId"
+                        },
+                        {
+                            "name": "events",
+                            "number": 2,
+                            "label": "LABEL_REPEATED",
+                            "type": "TYPE_MESSAGE",
+                            "typeName": ".happendb.messaging.v1.Event",
+                            "jsonName": "events"
+                        }
+                    ]
+                }
+            ],
+            "service": [
+                {
+                    "name": "ReadOnlyService",
+                    "method": [
+                        {
+                            "name": "ReadEvents",
+                            "inputType": ".happendb.store.v1.ReadEventsRequest",
+                            "outputType": ".happendb.store.v1.ReadEventsResponse"
+                        }
+                    ]
+                }
+            ],
+            "options": {
+                "goPackage": "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
+            },
+            "sourceCodeInfo": {
+                "location": [
+                    {
+                        "path": [],
+                        "span": [
+                            0,
+                            0,
+                            17,
+                            1
+                        ]
+                    },
+                    {
+                        "path": [
+                            12
+                        ],
+                        "span": [
+                            0,
+                            0,
+                            18
+                        ]
+                    },
+                    {
+                        "path": [
+                            2
+                        ],
+                        "span": [
+                            2,
+                            0,
+                            26
+                        ]
+                    },
+                    {
+                        "path": [
+                            3,
+                            0
+                        ],
+                        "span": [
+                            4,
+                            0,
+                            43
+                        ]
+                    },
+                    {
+                        "path": [
+                            8
+                        ],
+                        "span": [
+                            6,
+                            0,
+                            82
+                        ]
+                    },
+                    {
+                        "path": [
+                            8,
+                            11
+                        ],
+                        "span": [
+                            6,
+                            0,
+                            82
+                        ]
+                    },
+                    {
+                        "path": [
+                            6,
+                            0
+                        ],
+                        "span": [
+                            8,
+                            0,
+                            10,
+                            1
+                        ]
+                    },
+                    {
+                        "path": [
+                            6,
+                            0,
+                            1
+                        ],
+                        "span": [
+                            8,
+                            8,
+                            23
+                        ]
+                    },
+                    {
+                        "path": [
+                            6,
+                            0,
+                            2,
+                            0
+                        ],
+                        "span": [
+                            9,
+                            2,
+                            65
+                        ]
+                    },
+                    {
+                        "path": [
+                            6,
+                            0,
+                            2,
+                            0,
+                            1
+                        ],
+                        "span": [
+                            9,
+                            6,
+                            16
+                        ]
+                    },
+                    {
+                        "path": [
+                            6,
+                            0,
+                            2,
+                            0,
+                            2
+                        ],
+                        "span": [
+                            9,
+                            17,
+                            34
+                        ]
+                    },
+                    {
+                        "path": [
+                            6,
+                            0,
+                            2,
+                            0,
+                            3
+                        ],
+                        "span": [
+                            9,
+                            45,
+                            63
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0
+                        ],
+                        "span": [
+                            12,
+                            0,
+                            54
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            1
+                        ],
+                        "span": [
+                            12,
+                            8,
+                            25
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0
+                        ],
+                        "span": [
+                            12,
+                            28,
+                            52
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0,
+                            5
+                        ],
+                        "span": [
+                            12,
+                            28,
+                            34
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0,
+                            1
+                        ],
+                        "span": [
+                            12,
+                            35,
+                            47
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            0,
+                            2,
+                            0,
+                            3
+                        ],
+                        "span": [
+                            12,
+                            50,
+                            51
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1
+                        ],
+                        "span": [
+                            14,
+                            0,
+                            17,
+                            1
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            1
+                        ],
+                        "span": [
+                            14,
+                            8,
+                            26
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            0
+                        ],
+                        "span": [
+                            15,
+                            2,
+                            26
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            0,
+                            5
+                        ],
+                        "span": [
+                            15,
+                            2,
+                            8
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            0,
+                            1
+                        ],
+                        "span": [
+                            15,
+                            9,
+                            21
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            0,
+                            3
+                        ],
+                        "span": [
+                            15,
+                            24,
+                            25
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            1
+                        ],
+                        "span": [
+                            16,
+                            2,
+                            50
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            1,
+                            4
+                        ],
+                        "span": [
+                            16,
+                            2,
+                            10
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            1,
+                            6
+                        ],
+                        "span": [
+                            16,
+                            11,
+                            38
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            1,
+                            1
+                        ],
+                        "span": [
+                            16,
+                            39,
+                            45
+                        ]
+                    },
+                    {
+                        "path": [
+                            4,
+                            1,
+                            2,
+                            1,
+                            3
+                        ],
+                        "span": [
+                            16,
+                            48,
+                            49
+                        ]
+                    }
+                ]
+            },
+            "syntax": "proto3"
+        }
+    ],
+    "bufbuildImageExtension": {
+        "imageImportRefs": [
+            {
+                "fileIndex": 0
+            }
+        ]
+    }
+}

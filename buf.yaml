@@ -1,0 +1,9 @@
+build:
+  roots:
+    - proto
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - WIRE_JSON
