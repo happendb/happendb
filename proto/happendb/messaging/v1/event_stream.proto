@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package happendb.messaging.v1;
+
+import "happendb/messaging/v1/event.proto";
+
+option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1";
+
+message EventStream {
+  string name = 1;
+  repeated happendb.messaging.v1.Event events = 2;
+}

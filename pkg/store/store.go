@@ -23,3 +23,8 @@ var (
 type ReadOnlyStore interface {
 	ReadEvents(aggregateID string) (*messaging.EventStream, error)
 }
+
+// WriteOnlyStore ...
+type WriteOnlyStore interface {
+	Append(streamName string, events ...*messaging.Event) error
+}

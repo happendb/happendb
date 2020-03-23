@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package happendb.store.v1;
+
+import "happendb/messaging/v1/event.proto";
+import "happendb/messaging/v1/event_stream.proto";
+
+option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/store/v1";
+
+service WriteOnlyService { rpc Append(AppendRequest) returns (AppendResponse); }
+
+message AppendRequest {
+  happendb.messaging.v1.EventStream stream = 1;
+  repeated happendb.messaging.v1.Event events = 2;
+}
+
+message AppendResponse { string aggregate_id = 1; }

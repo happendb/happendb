@@ -75,6 +75,11 @@ func (s *Store) ReadEvents(aggregateID string) (*messaging.EventStream, error) {
 	return stream, nil
 }
 
+// Append ...
+func (s *Store) Append(streamName string, events ...*messaging.Event) error {
+	return nil
+}
+
 func generateTableName(persistMode store.PersistMode, _ string) (string, error) {
 	switch persistMode {
 	case store.PersistModeSingleTable:

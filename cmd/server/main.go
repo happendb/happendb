@@ -17,7 +17,7 @@ func main() {
 }
 
 func run(args []string, stdin io.Reader, stdout io.Writer) error {
-	srv, err := server.NewReadOnlyServer()
+	srv, err := server.NewStoreServer()
 
 	if err != nil {
 		return err

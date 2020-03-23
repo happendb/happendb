@@ -12,32 +12,35 @@ import (
 	"google.golang.org/grpc"
 )
 
-// ReadOnlyServer ...
-type ReadOnlyServer struct {
-	grpcServer *grpc.Server
-	store      store.ReadOnlyStore
+// StoreServer ...
+type StoreServer struct {
+	grpcServer     *grpc.Server
+	readOnlyStore  store.ReadOnlyStore
+	writeOnlyStore store.WriteOnlyStore
 }
 
-// NewReadOnlyServer ...
-func NewReadOnlyServer() (*ReadOnlyServer, error) {
+// NewStoreServer ...
+func NewStoreServer() (*StoreServer, error) {
 	store, err := postgres.NewPostgresStore(postgres.WithPersistMode(store.PersistModeSingleTable))
 
 	if err != nil {
 		return nil, err
 	}
 
-	srv := &ReadOnlyServer{
+	srv := &StoreServer{
 		grpc.NewServer(),
+		store,
 		store,
 	}
 
 	pb.RegisterReadOnlyServiceServer(srv.grpcServer, srv)
+	pb.RegisterWriteOnlyServiceServer(srv.grpcServer, srv)
 
 	return srv, nil
 }
 
 // Run ...
-func (s ReadOnlyServer) Run() error {
+func (s StoreServer) Run() error {
 	lis, err := net.Listen("tcp", ":3000")
 
 	if err != nil {
@@ -48,14 +51,14 @@ func (s ReadOnlyServer) Run() error {
 }
 
 // ReadEvents ...
-func (s ReadOnlyServer) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest) (*pb.ReadEventsResponse, error) {
+func (s StoreServer) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest) (*pb.ReadEventsResponse, error) {
 	var (
 		err    error
 		stream *messaging.EventStream
 		events []*messaging.Event
 	)
 
-	if stream, err = s.store.ReadEvents(req.GetAggregateId()); err != nil {
+	if stream, err = s.readOnlyStore.ReadEvents(req.GetAggregateId()); err != nil {
 		return nil, err
 	}
 
@@ -72,4 +75,19 @@ func (s ReadOnlyServer) ReadEvents(ctx context.Context, req *pb.ReadEventsReques
 		AggregateId: req.GetAggregateId(),
 		Events:      events,
 	}, nil
+}
+
+// Append ...
+func (s StoreServer) Append(ctx context.Context, req *pb.AppendRequest) (*pb.AppendResponse, error) {
+	log.WithFields(log.Fields{
+		"stream_name": req.GetStream().GetName,
+	}).Debugf("%T::Append(%#v, %#v)\n", s, req.GetEvents())
+
+	err := s.writeOnlyStore.Append(req.GetStream().GetName(), req.GetEvents()...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.AppendResponse{}, nil
 }
