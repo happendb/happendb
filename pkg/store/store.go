@@ -3,7 +3,7 @@ package store
 import (
 	"errors"
 
-	"github.com/happendb/happendb/pkg/messaging"
+	messaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 )
 
 // PersistMode ...

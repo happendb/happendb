@@ -4,8 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/happendb/happendb/pkg/messaging"
+	"github.com/golang/protobuf/ptypes/any"
+	messaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
+	"github.com/labstack/gommon/log"
+
 	"github.com/happendb/happendb/pkg/store"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -60,16 +64,21 @@ func (s *Store) ReadEvents(aggregateID string) (*messaging.EventStream, error) {
 		return nil, err
 	}
 
-	stream := messaging.NewEventStream(aggregateID)
+	stream := &messaging.EventStream{
+		Name:   aggregateID,
+		Events: make([]*messaging.Event, 0),
+	}
 
 	for rows.Next() {
-		event := messaging.NewEvent()
+		event := &messaging.Event{
+			Payload: &any.Any{},
+		}
 
 		if err := rows.Scan(&event.Id, &event.Type, &event.AggregateId, &event.Payload.Value); err != nil {
 			return nil, err
 		}
 
-		stream.Append(event)
+		stream.Events = append(stream.Events, event)
 	}
 
 	return stream, nil
@@ -77,6 +86,37 @@ func (s *Store) ReadEvents(aggregateID string) (*messaging.EventStream, error) {
 
 // Append ...
 func (s *Store) Append(streamName string, events ...*messaging.Event) error {
+	var (
+		err       error
+		tableName string
+	)
+
+	txn, err := s.db.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	if tableName, err = generateTableName(store.PersistModeSingleTable, streamName); err != nil {
+		return err
+	}
+
+	for _, event := range events {
+		_, err := s.db.Exec(
+			fmt.Sprintf("INSERT INTO %s(id, type, aggregate_id, payload) VALUES ($1, $2, $3, $4)", tableName),
+			event.GetId(),
+			event.GetType(),
+			event.GetAggregateId(),
+			string(event.Payload.Value),
+		)
+
+		if err, ok := err.(*pq.Error); ok {
+			log.Error(err)
+		}
+	}
+
+	txn.Commit()
+
 	return nil
 }
 

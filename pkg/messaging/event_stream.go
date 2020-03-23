@@ -14,13 +14,13 @@ func NewEventStream(name string) *EventStream {
 	return &EventStream{
 		EventStream: &pb.EventStream{
 			Name:   name,
-			Events: make([]*Event, 0),
+			Events: make([]*pb.Event, 0),
 		},
 	}
 }
 
 // Append ...
-func (s *EventStream) Append(e ...*Event) {
+func (s *EventStream) Append(e ...*pb.Event) {
 	s.EventStream.Events = append(s.EventStream.Events, e...)
 }
 
@@ -35,8 +35,8 @@ func (s EventStream) Len() int {
 }
 
 // Events ...
-func (s EventStream) Events() chan *Event {
-	ch := make(chan *Event)
+func (s EventStream) Events() chan *pb.Event {
+	ch := make(chan *pb.Event)
 
 	go func() {
 		defer close(ch)

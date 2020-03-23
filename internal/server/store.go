@@ -4,9 +4,9 @@ import (
 	"context"
 	"net"
 
-	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/postgres"
+	messaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -62,13 +62,13 @@ func (s StoreServer) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest) 
 		return nil, err
 	}
 
-	for event := range stream.Events() {
+	for _, event := range stream.GetEvents() {
 		events = append(events, event)
 	}
 
 	log.WithFields(log.Fields{
-		"stream_name":   stream.Name(),
-		"stream_length": stream.Len(),
+		"stream_name":   stream.GetName(),
+		"stream_length": len(stream.GetEvents()),
 	}).Debugf("%T::ReadEvents(%#v)\n", s, req)
 
 	return &pb.ReadEventsResponse{
@@ -81,7 +81,7 @@ func (s StoreServer) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest) 
 func (s StoreServer) Append(ctx context.Context, req *pb.AppendRequest) (*pb.AppendResponse, error) {
 	log.WithFields(log.Fields{
 		"stream_name": req.GetStream().GetName,
-	}).Debugf("%T::Append(%#v, %#v)\n", s, req.GetEvents())
+	}).Debugf("%T::Append(%#v)\n", s, req.GetEvents())
 
 	err := s.writeOnlyStore.Append(req.GetStream().GetName(), req.GetEvents()...)
 

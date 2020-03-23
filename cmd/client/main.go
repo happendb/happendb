@@ -6,8 +6,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/golang/protobuf/ptypes/any"
+	"github.com/google/uuid"
 	"github.com/happendb/happendb/internal/client"
-	"github.com/happendb/happendb/pkg/messaging"
+	messaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 )
 
@@ -32,11 +34,37 @@ func run(args []string, stdin io.Reader, stdout io.Writer) error {
 		return err
 	}
 
-	stream := messaging.NewEventStream("foo")
+	stream := &messaging.EventStream{
+		Name: "foo",
+	}
+
+	uuid, err := uuid.NewRandom()
+
+	if err != nil {
+		return err
+	}
 
 	_, err = client.Append(context.Background(), &pb.AppendRequest{
-		Stream: stream.EventStream,
-		Events: []*messaging.Event{},
+		Stream: stream,
+		Events: []*messaging.Event{
+			&messaging.Event{
+				Id:          uuid.String(),
+				Type:        "foo",
+				AggregateId: uuid.String(),
+				Payload: &any.Any{
+					Value: []byte(`
+{
+  "id": 92,
+  "first_name": "Gabey",
+  "last_name": "Kimbley",
+  "email": "gkimbley2j@businessweek.com",
+  "gender": "Female",
+  "ip_address": "13.242.243.177"
+}
+`),
+				},
+			},
+		},
 	})
 
 	if err != nil {
