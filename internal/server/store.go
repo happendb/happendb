@@ -92,7 +92,7 @@ func (s StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*p
 		"stream_name": req.GetStream().GetName,
 	}).Debugf("%T::Append(%#v)\n", s, req.GetEvents())
 
-	err := s.writeOnlyStore.Append(req.GetStream().GetName(), req.GetEvents()...)
+	err := s.writeOnlyStore.Append(req.GetStream().GetName(), messaging.WrapN(req.GetEvents())...)
 
 	if err != nil {
 		return nil, err

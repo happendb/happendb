@@ -32,7 +32,7 @@ func NewPostgresDriver() (*Driver, error) {
 }
 
 // Append ...
-func (d *Driver) Append(streamName string, events ...*pbMessaging.Event) error {
+func (d *Driver) Append(streamName string, events ...*messaging.Event) error {
 	var (
 		err       error
 		tableName string

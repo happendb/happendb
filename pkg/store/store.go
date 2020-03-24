@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/happendb/happendb/pkg/messaging"
-	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 )
 
 // Driver ...
@@ -25,7 +24,7 @@ var (
 )
 
 type driver interface {
-	Append(streamName string, events ...*pbMessaging.Event) error
+	Append(streamName string, events ...*messaging.Event) error
 	ReadEvents(aggregateID string) (*messaging.EventStream, error)
 }
 
@@ -36,7 +35,7 @@ type ReadOnlyStore interface {
 
 // WriteOnlyStore ...
 type WriteOnlyStore interface {
-	Append(streamName string, events ...*pbMessaging.Event) error
+	Append(streamName string, events ...*messaging.Event) error
 }
 
 // PersistentStoreOption ...
@@ -76,7 +75,7 @@ func NewPersistentStore(opts ...PersistentStoreOption) (*PersistentStore, error)
 }
 
 // Append ...
-func (s *PersistentStore) Append(streamName string, events ...*pbMessaging.Event) error {
+func (s *PersistentStore) Append(streamName string, events ...*messaging.Event) error {
 	return s.driver.Append(streamName, events...)
 }
 
