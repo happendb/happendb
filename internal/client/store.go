@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
+	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -11,8 +11,8 @@ import (
 // StoreClient ...
 type StoreClient struct {
 	conn            grpc.ClientConnInterface
-	readOnlyClient  pb.ReadOnlyServiceClient
-	writeOnlyClient pb.WriteOnlyServiceClient
+	readOnlyClient  pbStore.ReadOnlyServiceClient
+	writeOnlyClient pbStore.WriteOnlyServiceClient
 }
 
 // NewStoreClient ...
@@ -25,13 +25,13 @@ func NewStoreClient() (*StoreClient, error) {
 
 	return &StoreClient{
 		conn,
-		pb.NewReadOnlyServiceClient(conn),
-		pb.NewWriteOnlyServiceClient(conn),
+		pbStore.NewReadOnlyServiceClient(conn),
+		pbStore.NewWriteOnlyServiceClient(conn),
 	}, nil
 }
 
 // ReadEvents ...
-func (c *StoreClient) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest, opts ...grpc.CallOption) (*pb.ReadEventsResponse, error) {
+func (c *StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequest, opts ...grpc.CallOption) (*pbStore.ReadEventsResponse, error) {
 	response, err := c.readOnlyClient.ReadEvents(ctx, req, opts...)
 
 	if err != nil {
@@ -44,7 +44,7 @@ func (c *StoreClient) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest,
 }
 
 // Append ...
-func (c *StoreClient) Append(ctx context.Context, req *pb.AppendRequest, opts ...grpc.CallOption) (*pb.AppendResponse, error) {
+func (c *StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opts ...grpc.CallOption) (*pbStore.AppendResponse, error) {
 	response, err := c.writeOnlyClient.Append(ctx, req, opts...)
 
 	if err != nil {

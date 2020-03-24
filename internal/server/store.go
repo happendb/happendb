@@ -4,10 +4,11 @@ import (
 	"context"
 	"net"
 
+	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/postgres"
-	messaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
-	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
+	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
+	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -21,7 +22,15 @@ type StoreServer struct {
 
 // NewStoreServer ...
 func NewStoreServer() (*StoreServer, error) {
-	store, err := postgres.NewPostgresStore(postgres.WithPersistMode(store.PersistModeSingleTable))
+	driver, err := postgres.NewPostgresDriver()
+	if err != nil {
+		return nil, err
+	}
+
+	persistentStore, err := store.NewPersistentStore(
+		store.WithDriver(driver),
+		store.WithPersistMode(store.PersistModeSingleTable),
+	)
 
 	if err != nil {
 		return nil, err
@@ -29,12 +38,12 @@ func NewStoreServer() (*StoreServer, error) {
 
 	srv := &StoreServer{
 		grpc.NewServer(),
-		store,
-		store,
+		persistentStore,
+		persistentStore,
 	}
 
-	pb.RegisterReadOnlyServiceServer(srv.grpcServer, srv)
-	pb.RegisterWriteOnlyServiceServer(srv.grpcServer, srv)
+	pbStore.RegisterReadOnlyServiceServer(srv.grpcServer, srv)
+	pbStore.RegisterWriteOnlyServiceServer(srv.grpcServer, srv)
 
 	return srv, nil
 }
@@ -51,11 +60,11 @@ func (s StoreServer) Run() error {
 }
 
 // ReadEvents ...
-func (s StoreServer) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest) (*pb.ReadEventsResponse, error) {
+func (s StoreServer) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequest) (*pbStore.ReadEventsResponse, error) {
 	var (
 		err    error
 		stream *messaging.EventStream
-		events []*messaging.Event
+		events []*pbMessaging.Event
 	)
 
 	if stream, err = s.readOnlyStore.ReadEvents(req.GetAggregateId()); err != nil {
@@ -71,14 +80,14 @@ func (s StoreServer) ReadEvents(ctx context.Context, req *pb.ReadEventsRequest) 
 		"stream_length": len(stream.GetEvents()),
 	}).Debugf("%T::ReadEvents(%#v)\n", s, req)
 
-	return &pb.ReadEventsResponse{
+	return &pbStore.ReadEventsResponse{
 		AggregateId: req.GetAggregateId(),
 		Events:      events,
 	}, nil
 }
 
 // Append ...
-func (s StoreServer) Append(ctx context.Context, req *pb.AppendRequest) (*pb.AppendResponse, error) {
+func (s StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*pbStore.AppendResponse, error) {
 	log.WithFields(log.Fields{
 		"stream_name": req.GetStream().GetName,
 	}).Debugf("%T::Append(%#v)\n", s, req.GetEvents())
@@ -89,5 +98,5 @@ func (s StoreServer) Append(ctx context.Context, req *pb.AppendRequest) (*pb.App
 		return nil, err
 	}
 
-	return &pb.AppendResponse{}, nil
+	return &pbStore.AppendResponse{}, nil
 }

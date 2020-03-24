@@ -1,26 +1,26 @@
 package messaging
 
 import (
-	pb "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
+	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 )
 
 // EventStream ...
 type EventStream struct {
-	*pb.EventStream
+	*pbMessaging.EventStream
 }
 
 // NewEventStream ...
-func NewEventStream(name string) *EventStream {
+func NewEventStream(name string, events ...*pbMessaging.Event) *EventStream {
 	return &EventStream{
-		EventStream: &pb.EventStream{
+		EventStream: &pbMessaging.EventStream{
 			Name:   name,
-			Events: make([]*pb.Event, 0),
+			Events: append(make([]*pbMessaging.Event, 0), events...),
 		},
 	}
 }
 
 // Append ...
-func (s *EventStream) Append(e ...*pb.Event) {
+func (s *EventStream) Append(e ...*pbMessaging.Event) {
 	s.EventStream.Events = append(s.EventStream.Events, e...)
 }
 
@@ -34,9 +34,9 @@ func (s EventStream) Len() int {
 	return len(s.EventStream.Events)
 }
 
-// Events ...
-func (s EventStream) Events() chan *pb.Event {
-	ch := make(chan *pb.Event)
+// Iter ...
+func (s *EventStream) Iter() <-chan *pbMessaging.Event {
+	ch := make(chan *pbMessaging.Event)
 
 	go func() {
 		defer close(ch)
