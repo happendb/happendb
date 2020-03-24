@@ -4,10 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/golang/protobuf/ptypes/any"
 	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
-	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	"github.com/labstack/gommon/log"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
@@ -84,23 +82,19 @@ func (d *Driver) ReadEvents(aggregateID string) (*messaging.EventStream, error) 
 		return nil, err
 	}
 
-	stream := messaging.NewEventStream(aggregateID)
+	events := make([]*messaging.Event, 0)
 
 	for rows.Next() {
-		event := &pbMessaging.Event{
-			Payload: &any.Any{},
-		}
+		event := messaging.NewEvent()
 
 		if err := rows.Scan(&event.Id, &event.Type, &event.AggregateId, &event.Payload.Value); err != nil {
 			return nil, err
 		}
 
-		for e := range stream.Iter() {
-			stream.Events = append(stream.Events, e)
-		}
+		events = append(events, event)
 	}
 
-	return stream, nil
+	return messaging.NewEventStream(aggregateID, messaging.UnwrapN(events)...), nil
 }
 
 func generateTableName(persistMode store.PersistMode, _ string) (string, error) {

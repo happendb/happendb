@@ -38,7 +38,7 @@ func (c *StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsReq
 		return response, err
 	}
 
-	log.Info(response)
+	log.Infof("%#v\n", response)
 
 	return response, err
 }
@@ -51,7 +51,7 @@ func (c *StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, op
 		return response, err
 	}
 
-	log.Info(response)
+	log.Infof("%#v\n", response)
 
 	return response, err
 }
