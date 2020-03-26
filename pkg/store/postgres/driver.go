@@ -8,7 +8,6 @@ import (
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/labstack/gommon/log"
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
 // Driver ...
@@ -24,9 +23,7 @@ func NewPostgresDriver() (*Driver, error) {
 		return nil, err
 	}
 
-	return &Driver{
-		db,
-	}, nil
+	return &Driver{db}, nil
 }
 
 // Append ...
@@ -34,16 +31,15 @@ func (d *Driver) Append(streamName string, events ...*messaging.Event) error {
 	var (
 		err       error
 		tableName string
+		txn       *sql.Tx
 	)
 
-	txn, err := d.db.Begin()
-
-	if err != nil {
-		return err
+	if txn, err = d.db.Begin(); err != nil {
+		return fmt.Errorf("could not begin transaction: %v", err)
 	}
 
-	if tableName, err = generateTableName(store.PersistModeSingleTable, streamName); err != nil {
-		return err
+	if tableName, err = d.generateTableName(store.PersistModeSingleTable, streamName); err != nil {
+		return fmt.Errorf("could not generate table name: %v", err)
 	}
 
 	for _, event := range events {
@@ -73,8 +69,7 @@ func (d *Driver) ReadEvents(aggregateID string) (*messaging.EventStream, error) 
 		tableName string
 	)
 
-	// TODO(daniel): Grab this persist mode via configurable options of the driver
-	if tableName, err = generateTableName(store.PersistModeSingleTable, aggregateID); err != nil {
+	if tableName, err = d.generateTableName(store.PersistModeSingleTable, aggregateID); err != nil {
 		return nil, err
 	}
 
@@ -97,7 +92,7 @@ func (d *Driver) ReadEvents(aggregateID string) (*messaging.EventStream, error) 
 	return messaging.NewEventStream(aggregateID, messaging.UnwrapN(events)...), nil
 }
 
-func generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
+func (d Driver) generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
 	switch persistMode {
 	case store.PersistModeSingleTable:
 		return "events", nil
