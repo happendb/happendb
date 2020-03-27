@@ -97,7 +97,7 @@ func (d *Driver) ReadEvents(aggregateID string) (*messaging.EventStream, error) 
 	return messaging.NewEventStream(aggregateID, messaging.UnwrapN(events)...), nil
 }
 
-func generateTableName(persistMode store.PersistMode, _ string) (string, error) {
+func generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
 	switch persistMode {
 	case store.PersistModeSingleTable:
 		return "events", nil

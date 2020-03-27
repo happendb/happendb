@@ -16,42 +16,40 @@ type StoreClient struct {
 }
 
 // NewStoreClient ...
-func NewStoreClient() (*StoreClient, error) {
+func NewStoreClient() (cli *StoreClient, err error) {
 	conn, err := grpc.Dial("localhost:3000", grpc.WithInsecure())
+
+	if err != nil {
+		return
+	}
+
+	cli = &StoreClient{
+		conn,
+		pbStore.NewReadOnlyServiceClient(conn),
+		pbStore.NewWriteOnlyServiceClient(conn),
+	}
+
+	return
+}
+
+// ReadEvents ...
+func (c *StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequest, opts ...grpc.CallOption) (res *pbStore.ReadEventsResponse, err error) {
+	res, err = c.readOnlyClient.ReadEvents(ctx, req, opts...)
+
+	log.WithFields(log.Fields{"req": req}).Debugf("%T::ReadEvents\n", c)
+
+	return
+}
+
+// Append ...
+func (c *StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opts ...grpc.CallOption) (*pbStore.AppendResponse, error) {
+	res, err := c.writeOnlyClient.Append(ctx, req, opts...)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &StoreClient{
-		conn,
-		pbStore.NewReadOnlyServiceClient(conn),
-		pbStore.NewWriteOnlyServiceClient(conn),
-	}, nil
-}
+	log.WithFields(log.Fields{"res": res}).Debugf("%T::Append\n", c)
 
-// ReadEvents ...
-func (c *StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequest, opts ...grpc.CallOption) (*pbStore.ReadEventsResponse, error) {
-	response, err := c.readOnlyClient.ReadEvents(ctx, req, opts...)
-
-	if err != nil {
-		return response, err
-	}
-
-	log.Infof("%#v\n", response)
-
-	return response, err
-}
-
-// Append ...
-func (c *StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opts ...grpc.CallOption) (*pbStore.AppendResponse, error) {
-	response, err := c.writeOnlyClient.Append(ctx, req, opts...)
-
-	if err != nil {
-		return response, err
-	}
-
-	log.Infof("%#v\n", response)
-
-	return response, err
+	return res, err
 }

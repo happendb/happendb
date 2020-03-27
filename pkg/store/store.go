@@ -6,10 +6,6 @@ import (
 	"github.com/happendb/happendb/pkg/messaging"
 )
 
-// Driver ...
-type Driver interface {
-}
-
 // PersistMode ...
 type PersistMode = byte
 

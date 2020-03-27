@@ -14,4 +14,4 @@ message AppendRequest {
   repeated happendb.messaging.v1.Event events = 2;
 }
 
-message AppendResponse { string aggregate_id = 1; }
+message AppendResponse {}
