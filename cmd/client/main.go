@@ -4,11 +4,11 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/google/uuid"
 	"github.com/happendb/happendb/internal/client"
-	"github.com/happendb/happendb/pkg/messaging"
 	v1 "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
@@ -23,6 +23,7 @@ func main() {
 }
 
 func run(args []string, stdin io.Reader, stdout io.Writer) error {
+	aggregateID := args[0]
 	client, err := client.NewStoreClient()
 
 	if err != nil {
@@ -30,17 +31,11 @@ func run(args []string, stdin io.Reader, stdout io.Writer) error {
 	}
 
 	_, err = client.ReadEvents(context.Background(), &pb.ReadEventsRequest{
-		AggregateId: args[0],
+		AggregateId: aggregateID,
 	})
 
 	if err != nil {
 		return err
-	}
-
-	stream := &messaging.EventStream{
-		EventStream: &v1.EventStream{
-			Name: "foo",
-		},
 	}
 
 	uuid, err := uuid.NewRandom()
@@ -49,13 +44,15 @@ func run(args []string, stdin io.Reader, stdout io.Writer) error {
 		return err
 	}
 
+	now := time.Now()
+
 	_, err = client.Append(context.Background(), &pb.AppendRequest{
-		Stream: stream.EventStream,
+		StreamName: aggregateID,
 		Events: []*v1.Event{
 			{
-				Id:          uuid.String(),
-				Type:        "foo",
-				AggregateId: uuid.String(),
+				Id:   uuid.String(),
+				Type: "event.LoggedIn",
+				Time: now.Format("2006-01-02 15:04:05"),
 				Payload: &any.Any{
 					Value: []byte(`
 	{

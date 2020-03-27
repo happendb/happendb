@@ -50,7 +50,7 @@ func NewStoreServer() (srv *StoreServer, err error) {
 
 // Run ...
 func (s StoreServer) Run() error {
-	lis, err := net.Listen("tcp", ":3000")
+	lis, err := net.Listen("tcp", ":9000")
 
 	if err != nil {
 		return err
@@ -60,33 +60,29 @@ func (s StoreServer) Run() error {
 }
 
 // ReadEvents ...
-func (s *StoreServer) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequest) (res *pbStore.ReadEventsResponse, err error) {
-	var stream *messaging.EventStream
+func (s StoreServer) ReadEvents(req *pbStore.ReadEventsRequest, stream pbStore.ReadOnlyService_ReadEventsServer) error {
+	eventsChannel, err := s.readOnlyStore.ReadEvents(req.GetAggregateId())
 
-	if stream, err = s.readOnlyStore.ReadEvents(req.GetAggregateId()); err != nil {
-		return
+	if err != nil {
+		return err
 	}
 
-	log.WithFields(log.Fields{"req": req}).Debugf("%T::ReadEvents\n", s)
-
-	res = &pbStore.ReadEventsResponse{
-		AggregateId: req.GetAggregateId(),
-		EventStream: stream.EventStream,
+	for event := range eventsChannel {
+		stream.Send(event.Event)
 	}
 
-	return
+	return nil
 }
 
 // Append ...
-func (s *StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (res *pbStore.AppendResponse, err error) {
-	res = &pbStore.AppendResponse{}
-	err = s.writeOnlyStore.Append(req.GetStream().GetName(), messaging.WrapN(req.GetEvents())...)
+func (s StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*pbStore.AppendResponse, error) {
+	err := s.writeOnlyStore.Append(req.GetStreamName(), messaging.WrapN(req.GetEvents())...)
 
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	log.WithFields(log.Fields{"req": req}).Debugf("%T::Append\n", s)
 
-	return
+	return &pbStore.AppendResponse{}, nil
 }

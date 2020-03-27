@@ -21,12 +21,12 @@ var (
 
 type driver interface {
 	Append(streamName string, events ...*messaging.Event) error
-	ReadEvents(aggregateID string) (*messaging.EventStream, error)
+	ReadEvents(aggregateID string) (<-chan *messaging.Event, error)
 }
 
 // ReadOnlyStore ...
 type ReadOnlyStore interface {
-	ReadEvents(aggregateID string) (*messaging.EventStream, error)
+	ReadEvents(aggregateID string) (<-chan *messaging.Event, error)
 }
 
 // WriteOnlyStore ...
@@ -76,6 +76,6 @@ func (s *PersistentStore) Append(streamName string, events ...*messaging.Event) 
 }
 
 // ReadEvents ...
-func (s *PersistentStore) ReadEvents(aggregateID string) (*messaging.EventStream, error) {
+func (s *PersistentStore) ReadEvents(aggregateID string) (<-chan *messaging.Event, error) {
 	return s.driver.ReadEvents(aggregateID)
 }

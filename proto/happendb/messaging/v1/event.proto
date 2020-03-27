@@ -8,7 +8,7 @@ option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/messagin
 
 message Event {
   string id = 1;
-  string aggregate_id = 2;
-  string type = 3;
-  google.protobuf.Any payload = 4;
+  string type = 2;
+  google.protobuf.Any payload = 3;
+  string time = 4;
 }

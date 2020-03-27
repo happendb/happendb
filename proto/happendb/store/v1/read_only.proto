@@ -2,17 +2,13 @@ syntax = "proto3";
 
 package happendb.store.v1;
 
-import "happendb/messaging/v1/event_stream.proto";
+import "happendb/messaging/v1/event.proto";
 
 option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/store/v1";
 
 service ReadOnlyService {
-  rpc ReadEvents(ReadEventsRequest) returns (ReadEventsResponse);
+  rpc ReadEvents(ReadEventsRequest) returns (stream happendb.messaging.v1.Event);
 }
 
 message ReadEventsRequest { string aggregate_id = 1; }
 
-message ReadEventsResponse {
-  string aggregate_id = 1;
-  happendb.messaging.v1.EventStream event_stream = 2;
-}

@@ -6,8 +6,8 @@ import (
 
 	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
-	"github.com/labstack/gommon/log"
 	"github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 )
 
 // Driver ...
@@ -44,11 +44,11 @@ func (d *Driver) Append(streamName string, events ...*messaging.Event) error {
 
 	for _, event := range events {
 		_, err := d.db.Exec(
-			fmt.Sprintf("INSERT INTO %s(id, type, aggregate_id, payload) VALUES ($1, $2, $3, $4)", tableName),
+			fmt.Sprintf("INSERT INTO %s(id, type, payload, time) VALUES ($1, $2, $3, $4)", tableName),
 			event.GetId(),
 			event.GetType(),
-			event.GetAggregateId(),
 			string(event.Payload.Value),
+			event.GetTime(),
 		)
 
 		if err, ok := err.(*pq.Error); ok {
@@ -62,7 +62,7 @@ func (d *Driver) Append(streamName string, events ...*messaging.Event) error {
 }
 
 // ReadEvents ...
-func (d *Driver) ReadEvents(aggregateID string) (*messaging.EventStream, error) {
+func (d *Driver) ReadEvents(aggregateID string) (<-chan *messaging.Event, error) {
 	var (
 		err       error
 		rows      *sql.Rows
@@ -70,32 +70,49 @@ func (d *Driver) ReadEvents(aggregateID string) (*messaging.EventStream, error) 
 	)
 
 	if tableName, err = d.generateTableName(store.PersistModeSingleTable, aggregateID); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not generate table name: %v", err)
 	}
 
-	if rows, err = d.db.Query(fmt.Sprintf("SELECT * FROM %s WHERE aggregate_id = $1", tableName), aggregateID); err != nil {
-		return nil, err
+	r := d.db.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName))
+
+	if err != nil {
+		return nil, fmt.Errorf("could not execute query: %v", err)
 	}
 
-	events := make([]*messaging.Event, 0)
+	var count int64
+	r.Scan(&count)
+
+	if rows, err = d.db.Query(fmt.Sprintf("SELECT * FROM %s", tableName)); err != nil {
+		return nil, fmt.Errorf("could not execute query: %v", err)
+	}
+
+	events := []*messaging.Event{}
 
 	for rows.Next() {
 		event := messaging.NewEvent()
 
-		if err := rows.Scan(&event.Id, &event.Type, &event.AggregateId, &event.Payload.Value); err != nil {
-			return nil, err
+		if err := rows.Scan(&event.Id, &event.Type, &event.Payload.Value, &event.Time); err != nil {
+			return nil, fmt.Errorf("could not scan rows: %v", err)
 		}
 
 		events = append(events, event)
 	}
 
-	return messaging.NewEventStream(aggregateID, messaging.UnwrapN(events)...), nil
+	ch := make(chan *messaging.Event, count)
+
+	for _, e := range events {
+		ch <- e
+	}
+
+	close(ch)
+
+	return ch, nil
 }
 
-func (d Driver) generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
+func (d *Driver) generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
 	switch persistMode {
 	case store.PersistModeSingleTable:
-		return "events", nil
+		return pq.QuoteIdentifier(fmt.Sprintf("events_%s", streamName)), nil
 	default:
 		return "", store.ErrInvalidTableName
 	}
