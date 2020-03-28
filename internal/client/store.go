@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"io"
+	"time"
 
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
@@ -53,7 +54,8 @@ func (c StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequ
 			return nil, err
 		}
 
-		log.WithFields(log.Fields{"event": event}).Debugf("[%T::ReadEvents] event received\n", c)
+		log.WithField("event", event).Debugf("[%T::ReadEvents] event received\n", c)
+		time.Sleep(time.Millisecond * 200)
 	}
 }
 
@@ -65,7 +67,7 @@ func (c StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opt
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{"req": req}).Debugf("%T::Append\n", c)
+	log.WithField("request", req).Debugf("%T::Append\n", c)
 
 	return res, err
 }
