@@ -4,12 +4,8 @@ import (
 	"context"
 	"io"
 	"os"
-	"time"
 
-	"github.com/golang/protobuf/ptypes/any"
-	"github.com/google/uuid"
 	"github.com/happendb/happendb/internal/client"
-	v1 "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
 )
@@ -38,40 +34,40 @@ func run(args []string, stdin io.Reader, stdout io.Writer) error {
 		return err
 	}
 
-	uuid, err := uuid.NewRandom()
+	// uuid, err := uuid.NewRandom()
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	now := time.Now()
+	// now := time.Now()
 
-	_, err = client.Append(context.Background(), &pb.AppendRequest{
-		StreamName: aggregateID,
-		Events: []*v1.Event{
-			{
-				Id:   uuid.String(),
-				Type: "event.LoggedIn",
-				Time: now.Format("2006-01-02 15:04:05"),
-				Payload: &any.Any{
-					Value: []byte(`
-	{
-	  "id": 92,
-	  "first_name": "Gabey",
-	  "last_name": "Kimbley",
-	  "email": "gkimbley2j@businessweek.com",
-	  "gender": "Female",
-	  "ip_address": "13.242.243.177"
-	}
-	`),
-				},
-			},
-		},
-	})
+	// _, err = client.Append(context.Background(), &pb.AppendRequest{
+	// 	StreamName: aggregateID,
+	// 	Events: []*v1.Event{
+	// 		{
+	// 			Id:   uuid.String(),
+	// 			Type: "event.LoggedIn",
+	// 			Time: now.Format("2006-01-02 15:04:05"),
+	// 			Payload: &any.Any{
+	// 				Value: []byte(`
+	// {
+	//   "id": 92,
+	//   "first_name": "Gabey",
+	//   "last_name": "Kimbley",
+	//   "email": "gkimbley2j@businessweek.com",
+	//   "gender": "Female",
+	//   "ip_address": "13.242.243.177"
+	// }
+	// `),
+	// 			},
+	// 		},
+	// 	},
+	// })
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
