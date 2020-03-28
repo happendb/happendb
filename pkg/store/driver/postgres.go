@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/ptypes/any"
-	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
+	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
@@ -28,7 +28,7 @@ func NewPostgresDriver() (*Postgres, error) {
 }
 
 // Append ...
-func (d Postgres) Append(streamName string, events ...*messaging.Event) error {
+func (d Postgres) Append(streamName string, events ...*pbMessaging.Event) error {
 	var (
 		err       error
 		tableName string
@@ -63,7 +63,7 @@ func (d Postgres) Append(streamName string, events ...*messaging.Event) error {
 }
 
 // ReadEvents ...
-func (d Postgres) ReadEvents(aggregateID string) (<-chan *messaging.Event, error) {
+func (d Postgres) ReadEvents(aggregateID string) (<-chan *pbMessaging.Event, error) {
 	var (
 		err       error
 		rows      *sql.Rows
@@ -93,10 +93,13 @@ func (d Postgres) ReadEvents(aggregateID string) (<-chan *messaging.Event, error
 		return nil, fmt.Errorf("could not execute query: %v", err)
 	}
 
-	events := []*messaging.Event{}
+	events := make([]*pbMessaging.Event, 0)
 
 	for rows.Next() {
-		event := messaging.NewEvent(&any.Any{}, &any.Any{})
+		event := &pbMessaging.Event{
+			Payload:  &any.Any{},
+			Metadata: &any.Any{},
+		}
 
 		if err := rows.Scan(&event.Id, &event.Type, &event.Payload.Value, &event.Metadata.Value, &event.Version, &event.Time); err != nil {
 			return nil, fmt.Errorf("could not scan rows: %v", err)
@@ -105,7 +108,7 @@ func (d Postgres) ReadEvents(aggregateID string) (<-chan *messaging.Event, error
 		events = append(events, event)
 	}
 
-	ch := make(chan *messaging.Event, count)
+	ch := make(chan *pbMessaging.Event, count)
 
 	for _, e := range events {
 		ch <- e

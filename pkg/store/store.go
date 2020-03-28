@@ -3,7 +3,7 @@ package store
 import (
 	"errors"
 
-	"github.com/happendb/happendb/pkg/messaging"
+	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 )
 
 // PersistMode ...
@@ -20,18 +20,18 @@ var (
 )
 
 type driver interface {
-	Append(streamName string, events ...*messaging.Event) error
-	ReadEvents(aggregateID string) (<-chan *messaging.Event, error)
+	Append(streamName string, events ...*pbMessaging.Event) error
+	ReadEvents(aggregateID string) (<-chan *pbMessaging.Event, error)
 }
 
 // ReadOnlyStore ...
 type ReadOnlyStore interface {
-	ReadEvents(aggregateID string) (<-chan *messaging.Event, error)
+	ReadEvents(aggregateID string) (<-chan *pbMessaging.Event, error)
 }
 
 // WriteOnlyStore ...
 type WriteOnlyStore interface {
-	Append(streamName string, events ...*messaging.Event) error
+	Append(streamName string, events ...*pbMessaging.Event) error
 }
 
 // PersistentStoreOption ...
@@ -71,11 +71,11 @@ func NewPersistentStore(opts ...PersistentStoreOption) (*PersistentStore, error)
 }
 
 // Append ...
-func (s *PersistentStore) Append(streamName string, events ...*messaging.Event) error {
+func (s *PersistentStore) Append(streamName string, events ...*pbMessaging.Event) error {
 	return s.driver.Append(streamName, events...)
 }
 
 // ReadEvents ...
-func (s *PersistentStore) ReadEvents(aggregateID string) (<-chan *messaging.Event, error) {
+func (s *PersistentStore) ReadEvents(aggregateID string) (<-chan *pbMessaging.Event, error) {
 	return s.driver.ReadEvents(aggregateID)
 }
