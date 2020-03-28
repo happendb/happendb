@@ -3,8 +3,8 @@ package client
 import (
 	"context"
 	"io"
-	"time"
 
+	"github.com/happendb/happendb/internal/time"
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
@@ -37,6 +37,8 @@ func NewStoreClient() (cli *StoreClient, err error) {
 
 // ReadEvents ...
 func (c StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequest, opts ...grpc.CallOption) (pbStore.ReadOnlyService_ReadEventsClient, error) {
+	defer time.Elapsedf("%T::ReadEvents", c)()
+
 	stream, err := c.readOnlyClient.ReadEvents(ctx, req, opts...)
 
 	if err != nil {
@@ -54,13 +56,14 @@ func (c StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequ
 			return nil, err
 		}
 
-		log.WithField("event", event).Debugf("[%T::ReadEvents] event received\n", c)
-		time.Sleep(time.Millisecond * 200)
+		log.WithField("event", event).Debugf("%T::ReadEvents event received\n", c)
 	}
 }
 
 // Append ...
 func (c StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opts ...grpc.CallOption) (*pbStore.AppendResponse, error) {
+	defer time.Elapsedf("%T::Append", c)()
+
 	res, err := c.writeOnlyClient.Append(ctx, req, opts...)
 
 	if err != nil {

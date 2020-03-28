@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 
+	"github.com/happendb/happendb/internal/time"
 	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/driver"
@@ -61,6 +62,8 @@ func (s StoreServer) Run() error {
 
 // ReadEvents ...
 func (s StoreServer) ReadEvents(req *pbStore.ReadEventsRequest, stream pbStore.ReadOnlyService_ReadEventsServer) error {
+	defer time.Elapsedf("%T::ReadEvents", s)()
+
 	eventsChannel, err := s.readOnlyStore.ReadEvents(req.GetAggregateId())
 
 	if err != nil {
@@ -78,6 +81,8 @@ func (s StoreServer) ReadEvents(req *pbStore.ReadEventsRequest, stream pbStore.R
 
 // Append ...
 func (s StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*pbStore.AppendResponse, error) {
+	defer time.Elapsedf("%T::Append", s)()
+
 	err := s.writeOnlyStore.Append(req.GetStreamName(), messaging.WrapN(req.GetEvents())...)
 
 	if err != nil {

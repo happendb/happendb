@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/golang/protobuf/ptypes/any"
 	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/lib/pq"
@@ -95,9 +96,9 @@ func (d Postgres) ReadEvents(aggregateID string) (<-chan *messaging.Event, error
 	events := []*messaging.Event{}
 
 	for rows.Next() {
-		event := messaging.NewEvent()
+		event := messaging.NewEvent(&any.Any{}, &any.Any{})
 
-		if err := rows.Scan(&event.Id, &event.Type, &event.Payload.Value, &event.Time); err != nil {
+		if err := rows.Scan(&event.Id, &event.Type, &event.Payload.Value, &event.Metadata.Value, &event.Version, &event.Time); err != nil {
 			return nil, fmt.Errorf("could not scan rows: %v", err)
 		}
 
