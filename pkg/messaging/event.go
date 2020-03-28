@@ -11,10 +11,11 @@ type Event struct {
 }
 
 // NewEvent ...
-func NewEvent() *Event {
+func NewEvent(payload *any.Any, metadata *any.Any) *Event {
 	return &Event{
 		&pbMessaging.Event{
-			Payload: &any.Any{},
+			Payload:  payload,
+			Metadata: metadata,
 		},
 	}
 }
