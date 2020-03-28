@@ -1,4 +1,4 @@
-package postgres
+package driver
 
 import (
 	"database/sql"
@@ -10,24 +10,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Driver ...
-type Driver struct {
+// Postgres ...
+type Postgres struct {
 	db *sql.DB
 }
 
 // NewPostgresDriver ...
-func NewPostgresDriver() (*Driver, error) {
+func NewPostgresDriver() (*Postgres, error) {
 	db, err := sql.Open("postgres", "host=localhost dbname=happendb user=postgres password=123 sslmode=disable")
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &Driver{db}, nil
+	return &Postgres{db}, nil
 }
 
 // Append ...
-func (d *Driver) Append(streamName string, events ...*messaging.Event) error {
+func (d Postgres) Append(streamName string, events ...*messaging.Event) error {
 	var (
 		err       error
 		tableName string
@@ -62,7 +62,7 @@ func (d *Driver) Append(streamName string, events ...*messaging.Event) error {
 }
 
 // ReadEvents ...
-func (d *Driver) ReadEvents(aggregateID string) (<-chan *messaging.Event, error) {
+func (d Postgres) ReadEvents(aggregateID string) (<-chan *messaging.Event, error) {
 	var (
 		err       error
 		rows      *sql.Rows
@@ -73,7 +73,10 @@ func (d *Driver) ReadEvents(aggregateID string) (<-chan *messaging.Event, error)
 		return nil, fmt.Errorf("could not generate table name: %v", err)
 	}
 
-	r := d.db.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName))
+	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
+	log.WithField("query", q).Debugf("%T::ReadEvents", d)
+
+	r := d.db.QueryRow(q)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not execute query: %v", err)
@@ -82,7 +85,10 @@ func (d *Driver) ReadEvents(aggregateID string) (<-chan *messaging.Event, error)
 	var count int64
 	r.Scan(&count)
 
-	if rows, err = d.db.Query(fmt.Sprintf("SELECT * FROM %s", tableName)); err != nil {
+	q = fmt.Sprintf("SELECT * FROM %s", tableName)
+	log.WithField("query", q).Debugf("%T::ReadEvents", d)
+
+	if rows, err = d.db.Query(q); err != nil {
 		return nil, fmt.Errorf("could not execute query: %v", err)
 	}
 
@@ -109,7 +115,7 @@ func (d *Driver) ReadEvents(aggregateID string) (<-chan *messaging.Event, error)
 	return ch, nil
 }
 
-func (d *Driver) generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
+func (d *Postgres) generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
 	switch persistMode {
 	case store.PersistModeSingleTable:
 		return pq.QuoteIdentifier(fmt.Sprintf("events_%s", streamName)), nil

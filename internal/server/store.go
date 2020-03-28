@@ -6,7 +6,7 @@ import (
 
 	"github.com/happendb/happendb/pkg/messaging"
 	"github.com/happendb/happendb/pkg/store"
-	"github.com/happendb/happendb/pkg/store/postgres"
+	"github.com/happendb/happendb/pkg/store/driver"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -21,7 +21,7 @@ type StoreServer struct {
 
 // NewStoreServer ...
 func NewStoreServer() (srv *StoreServer, err error) {
-	driver, err := postgres.NewPostgresDriver()
+	driver, err := driver.NewPostgresDriver()
 
 	if err != nil {
 		return
@@ -71,6 +71,8 @@ func (s StoreServer) ReadEvents(req *pbStore.ReadEventsRequest, stream pbStore.R
 		stream.Send(event.Event)
 	}
 
+	log.WithField("request", req).Debugf("%T::ReadEvents\n", s)
+
 	return nil
 }
 
@@ -82,7 +84,7 @@ func (s StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*p
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{"req": req}).Debugf("%T::Append\n", s)
+	log.WithField("request", req).Debugf("%T::Append\n", s)
 
 	return &pbStore.AppendResponse{}, nil
 }
