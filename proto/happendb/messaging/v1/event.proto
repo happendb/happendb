@@ -10,5 +10,7 @@ message Event {
   string id = 1;
   string type = 2;
   google.protobuf.Any payload = 3;
-  string time = 4;
+  google.protobuf.Any metadata = 4;
+  int64 version = 5;
+  string time = 6;
 }
