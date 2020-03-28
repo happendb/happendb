@@ -20,14 +20,19 @@ func main() {
 
 func run(args []string, stdin io.Reader, stdout io.Writer) error {
 	aggregateID := args[0]
+	start := uint64(0)
+	count := uint64(100)
+
 	client, err := client.NewStoreClient()
 
 	if err != nil {
 		return err
 	}
 
-	_, err = client.ReadEvents(context.Background(), &pb.ReadEventsRequest{
-		AggregateId: aggregateID,
+	_, err = client.ReadStreamEventsForwardAsync(context.Background(), &pb.ReadStreamEventsForwardRequest{
+		Stream: aggregateID,
+		Start:  start,
+		Count:  count,
 	})
 
 	if err != nil {

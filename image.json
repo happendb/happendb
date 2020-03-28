@@ -435,7 +435,7 @@
                     "name": "ReadOnlyService",
                     "method": [
                         {
-                            "name": "ReadEvents",
+                            "name": "ReadStreamEventsForwardAsync",
                             "inputType": ".happendb.store.v1.ReadEventsRequest",
                             "outputType": ".happendb.store.v1.ReadEventsResponse"
                         }

@@ -28,7 +28,7 @@ func NewPostgresDriver() (*Postgres, error) {
 }
 
 // Append ...
-func (d Postgres) Append(streamName string, events ...*pbMessaging.Event) error {
+func (d *Postgres) Append(streamName string, events ...*pbMessaging.Event) error {
 	var (
 		err       error
 		tableName string
@@ -62,8 +62,8 @@ func (d Postgres) Append(streamName string, events ...*pbMessaging.Event) error 
 	return nil
 }
 
-// ReadEvents ...
-func (d Postgres) ReadEvents(aggregateID string) (<-chan *pbMessaging.Event, error) {
+// ReadStreamEventsForwardAsync ...
+func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error) {
 	var (
 		err       error
 		rows      *sql.Rows
@@ -75,7 +75,7 @@ func (d Postgres) ReadEvents(aggregateID string) (<-chan *pbMessaging.Event, err
 	}
 
 	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
-	log.WithField("query", q).Debugf("%T::ReadEvents", d)
+	log.WithField("query", q).Debugf("%T::ReadStreamEventsForwardAsync", d)
 
 	r := d.db.QueryRow(q)
 
@@ -87,7 +87,7 @@ func (d Postgres) ReadEvents(aggregateID string) (<-chan *pbMessaging.Event, err
 	r.Scan(&count)
 
 	q = fmt.Sprintf("SELECT * FROM %s", tableName)
-	log.WithField("query", q).Debugf("%T::ReadEvents", d)
+	log.WithField("query", q).Debugf("%T::ReadStreamEventsForwardAsync", d)
 
 	if rows, err = d.db.Query(q); err != nil {
 		return nil, fmt.Errorf("could not execute query: %v", err)

@@ -7,8 +7,21 @@ import "happendb/messaging/v1/event.proto";
 option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/store/v1";
 
 service ReadOnlyService {
-  rpc ReadEvents(ReadEventsRequest) returns (stream happendb.messaging.v1.Event);
+  rpc ReadStreamEventsForward(ReadStreamEventsForwardRequest)
+      returns (ReadStreamEventsForwardResponse);
+
+  rpc ReadStreamEventsForwardAsync(ReadStreamEventsForwardRequest)
+      returns (stream happendb.messaging.v1.Event);
 }
 
-message ReadEventsRequest { string aggregate_id = 1; }
+message ReadStreamEventsForwardRequest {
+  string stream = 1;
+  uint64 start = 2;
+  uint64 count = 3;
+}
 
+message ReadStreamEventsForwardResponse {
+  string stream = 1;
+  uint64 start = 2;
+  uint64 count = 3;
+}

@@ -35,11 +35,11 @@ func NewStoreClient() (cli *StoreClient, err error) {
 	return
 }
 
-// ReadEvents ...
-func (c StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequest, opts ...grpc.CallOption) (pbStore.ReadOnlyService_ReadEventsClient, error) {
-	defer time.Elapsedf("%T::ReadEvents", c)()
+// ReadStreamEventsForwardAsync ...
+func (c *StoreClient) ReadStreamEventsForwardAsync(ctx context.Context, req *pbStore.ReadStreamEventsForwardRequest, opts ...grpc.CallOption) (pbStore.ReadOnlyService_ReadStreamEventsForwardAsyncClient, error) {
+	defer time.Elapsedf("%T::ReadStreamEventsForwardAsync", c)()
 
-	stream, err := c.readOnlyClient.ReadEvents(ctx, req, opts...)
+	stream, err := c.readOnlyClient.ReadStreamEventsForwardAsync(ctx, req, opts...)
 
 	if err != nil {
 		return nil, err
@@ -56,12 +56,12 @@ func (c StoreClient) ReadEvents(ctx context.Context, req *pbStore.ReadEventsRequ
 			return nil, err
 		}
 
-		log.WithField("event", event).Debugf("%T::ReadEvents event received\n", c)
+		log.WithField("event", event).Debugf("%T::ReadStreamEventsForwardAsync event received\n", c)
 	}
 }
 
 // Append ...
-func (c StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opts ...grpc.CallOption) (*pbStore.AppendResponse, error) {
+func (c *StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opts ...grpc.CallOption) (*pbStore.AppendResponse, error) {
 	defer time.Elapsedf("%T::Append", c)()
 
 	res, err := c.writeOnlyClient.Append(ctx, req, opts...)
