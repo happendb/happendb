@@ -29,7 +29,17 @@ func run(args []string, stdin io.Reader, stdout io.Writer) error {
 		return err
 	}
 
-	_, err = client.ReadStreamEventsForwardAsync(context.Background(), &pb.ReadStreamEventsForwardRequest{
+	_, err = client.ReadStreamEventsForwardAsync(context.Background(), &pb.AsyncReadStreamEventsForwardRequest{
+		Stream: aggregateID,
+		Start:  start,
+		Count:  count,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = client.ReadStreamEventsForward(context.Background(), &pb.SyncReadStreamEventsForwardRequest{
 		Stream: aggregateID,
 		Start:  start,
 		Count:  count,

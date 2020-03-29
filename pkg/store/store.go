@@ -20,13 +20,25 @@ var (
 )
 
 type driver interface {
-	Append(streamName string, events ...*pbMessaging.Event) error
+	AsyncReaderStore
+	SyncReaderStore
+	WriteOnlyStore
+}
+
+// AsyncReaderStore ...
+type AsyncReaderStore interface {
 	ReadStreamEventsForwardAsync(streamName string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error)
 }
 
-// ReadOnlyStore ...
-type ReadOnlyStore interface {
-	ReadStreamEventsForwardAsync(aggregateID string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error)
+// SyncReaderStore ...
+type SyncReaderStore interface {
+	ReadStreamEventsForward(streamName string, offset uint64, limit uint64) ([]*pbMessaging.Event, error)
+}
+
+// ReaderStore ...
+type ReaderStore interface {
+	AsyncReaderStore
+	SyncReaderStore
 }
 
 // WriteOnlyStore ...
@@ -73,6 +85,11 @@ func NewPersistentStore(opts ...PersistentStoreOption) (*PersistentStore, error)
 // Append ...
 func (s *PersistentStore) Append(streamName string, events ...*pbMessaging.Event) error {
 	return s.driver.Append(streamName, events...)
+}
+
+// ReadStreamEventsForward ...
+func (s *PersistentStore) ReadStreamEventsForward(streamName string, offset uint64, limit uint64) ([]*pbMessaging.Event, error) {
+	return s.driver.ReadStreamEventsForward(streamName, offset, limit)
 }
 
 // ReadStreamEventsForwardAsync ...

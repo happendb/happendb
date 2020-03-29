@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/happendb/happendb/internal/time"
+	"github.com/happendb/happendb/internal/debug"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/driver"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
@@ -15,7 +15,7 @@ import (
 // StoreServer ...
 type StoreServer struct {
 	grpcServer     *grpc.Server
-	readOnlyStore  store.ReadOnlyStore
+	readOnlyStore  store.ReaderStore
 	writeOnlyStore store.WriteOnlyStore
 }
 
@@ -42,7 +42,8 @@ func NewStoreServer() (srv *StoreServer, err error) {
 		persistentStore,
 	}
 
-	pbStore.RegisterReadOnlyServiceServer(srv.grpcServer, srv)
+	pbStore.RegisterSyncReaderServiceServer(srv.grpcServer, srv)
+	pbStore.RegisterAsyncReaderServiceServer(srv.grpcServer, srv)
 	pbStore.RegisterWriteOnlyServiceServer(srv.grpcServer, srv)
 
 	return
@@ -59,14 +60,24 @@ func (s StoreServer) Run() error {
 	return s.grpcServer.Serve(lis)
 }
 
-// ReadStreamEventsForward
-func (s *StoreServer) ReadStreamEventsForward(context.Context, *pbStore.ReadStreamEventsForwardRequest) (*pbStore.ReadStreamEventsForwardResponse, error) {
-	return nil, nil
+// ReadStreamEventsForward ...
+func (s *StoreServer) ReadStreamEventsForward(ctx context.Context, req *pbStore.SyncReadStreamEventsForwardRequest) (*pbStore.SyncReadStreamEventsForwardResponse, error) {
+	defer log.WithField("request", req).Debug(debug.Elapsedf("[%T::ReadStreamEventsForward]", s)())
+
+	events, err := s.readOnlyStore.ReadStreamEventsForward(req.GetStream(), req.GetStart(), req.GetCount())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &pbStore.SyncReadStreamEventsForwardResponse{
+		Events: events,
+	}, err
 }
 
 // ReadStreamEventsForwardAsync ...
-func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.ReadStreamEventsForwardRequest, stream pbStore.ReadOnlyService_ReadStreamEventsForwardAsyncServer) error {
-	defer time.Elapsedf("%T::ReadStreamEventsForwardAsync", s)()
+func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.AsyncReadStreamEventsForwardRequest, stream pbStore.AsyncReaderService_ReadStreamEventsForwardAsyncServer) error {
+	defer log.WithField("request", req).Debug(debug.Elapsedf("[%T::ReadStreamEventsForwardAsync]", s)())
 
 	eventsChannel, err := s.readOnlyStore.ReadStreamEventsForwardAsync(req.GetStream(), req.GetStart(), req.GetCount())
 
@@ -78,22 +89,18 @@ func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.ReadStreamEvents
 		stream.Send(event)
 	}
 
-	log.WithField("request", req).Debugf("%T::ReadStreamEventsForwardAsync\n", s)
-
 	return nil
 }
 
 // Append ...
 func (s *StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*pbStore.AppendResponse, error) {
-	defer time.Elapsedf("%T::Append", s)()
+	defer log.WithField("request", req).Debug(debug.Elapsedf("[%T::Append]", s)())
 
 	err := s.writeOnlyStore.Append(req.GetStreamName(), req.GetEvents()...)
 
 	if err != nil {
 		return nil, err
 	}
-
-	log.WithField("request", req).Debugf("%T::Append\n", s)
 
 	return &pbStore.AppendResponse{}, nil
 }
