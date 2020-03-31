@@ -8,7 +8,7 @@ import (
 	"github.com/happendb/happendb/pkg/store"
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	"github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 )
 
 // Postgres ...
@@ -53,7 +53,7 @@ func (d *Postgres) Append(streamName string, events ...*pbMessaging.Event) error
 		)
 
 		if err, ok := err.(*pq.Error); ok {
-			log.Error(err)
+			log.Error().AnErr("could execute insert query", err)
 		}
 	}
 
@@ -92,7 +92,7 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 	}
 
 	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
-	log.WithField("query", q).Debugf("[%T::ReadStreamEventsForwardAsync] querying count", d)
+	log.Debug().Str("query", q).Msgf("[%T::ReadStreamEventsForwardAsync] querying count", d)
 
 	r := d.db.QueryRow(q)
 
@@ -103,8 +103,8 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 	var count int64
 	r.Scan(&count)
 
-	q = fmt.Sprintf("SELECT * FROM %s", tableName)
-	log.WithField("query", q).Debugf("[%T::ReadStreamEventsForwardAsync] querying rows", d)
+	q = fmt.Sprintf("SELECT * FROM %s ORDER BY version", tableName)
+	log.Debug().Str("query", q).Msgf("[%T::ReadStreamEventsForwardAsync] querying rows", d)
 
 	if rows, err = d.db.Query(q); err != nil {
 		return nil, fmt.Errorf("could not execute query: %v", err)

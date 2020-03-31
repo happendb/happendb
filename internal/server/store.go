@@ -2,13 +2,15 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net"
 
-	"github.com/happendb/happendb/internal/debug"
+	"github.com/happendb/happendb/internal/logtime"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/driver"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 )
 
@@ -37,9 +39,9 @@ func NewStoreServer() (srv *StoreServer, err error) {
 	}
 
 	srv = &StoreServer{
-		grpc.NewServer(),
-		persistentStore,
-		persistentStore,
+		grpcServer:     grpc.NewServer(),
+		readOnlyStore:  persistentStore,
+		writeOnlyStore: persistentStore,
 	}
 
 	pbStore.RegisterSyncReaderServiceServer(srv.grpcServer, srv)
@@ -49,9 +51,15 @@ func NewStoreServer() (srv *StoreServer, err error) {
 	return
 }
 
+const (
+	port = 9000
+)
+
 // Run ...
-func (s StoreServer) Run() error {
-	lis, err := net.Listen("tcp", ":9000")
+func (s *StoreServer) Run(args []string, stdin io.Reader, stdout io.Writer) error {
+	log.Info().Msgf("listening on port %v", port)
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
 
 	if err != nil {
 		return err
@@ -62,7 +70,7 @@ func (s StoreServer) Run() error {
 
 // ReadStreamEventsForward ...
 func (s *StoreServer) ReadStreamEventsForward(ctx context.Context, req *pbStore.SyncReadStreamEventsForwardRequest) (*pbStore.SyncReadStreamEventsForwardResponse, error) {
-	defer log.WithField("request", req).Debug(debug.Elapsedf("[%T::ReadStreamEventsForward]", s)())
+	defer logtime.Elapsedf("%T::ReadStreamEventsForward", s)()
 
 	events, err := s.readOnlyStore.ReadStreamEventsForward(req.GetStream(), req.GetStart(), req.GetCount())
 
@@ -77,7 +85,7 @@ func (s *StoreServer) ReadStreamEventsForward(ctx context.Context, req *pbStore.
 
 // ReadStreamEventsForwardAsync ...
 func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.AsyncReadStreamEventsForwardRequest, stream pbStore.AsyncReaderService_ReadStreamEventsForwardAsyncServer) error {
-	defer log.WithField("request", req).Debug(debug.Elapsedf("[%T::ReadStreamEventsForwardAsync]", s)())
+	defer logtime.Elapsedf("%T::ReadStreamEventsForwardAsync", s)()
 
 	eventsChannel, err := s.readOnlyStore.ReadStreamEventsForwardAsync(req.GetStream(), req.GetStart(), req.GetCount())
 
@@ -94,7 +102,7 @@ func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.AsyncReadStreamE
 
 // Append ...
 func (s *StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*pbStore.AppendResponse, error) {
-	defer log.WithField("request", req).Debug(debug.Elapsedf("[%T::Append]", s)())
+	defer logtime.Elapsedf("%T::Append", s)()
 
 	err := s.writeOnlyStore.Append(req.GetStreamName(), req.GetEvents()...)
 
