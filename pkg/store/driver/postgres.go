@@ -11,9 +11,25 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	createStreamSQLf = `
+CREATE TABLE %s (
+    "id" uuid NOT NULL,
+    "type" character varying(255) NOT NULL,
+    "payload" jsonb NOT NULL,
+    "metadata" jsonb,
+    "version" bigint NOT NULL,
+	"time" timestamptz NOT NULL
+);
+`
+
+	insertEventSQLf = `INSERT INTO %s(id, type, payload, metadata, version, time) VALUES ($1, $2, $3, $4, $5, $6);`
+)
+
 // Postgres ...
 type Postgres struct {
-	db *sql.DB
+	db      *sql.DB
+	streams map[string]*sql.Rows
 }
 
 // NewPostgresDriver ...
@@ -24,7 +40,7 @@ func NewPostgresDriver() (*Postgres, error) {
 		return nil, err
 	}
 
-	return &Postgres{db}, nil
+	return &Postgres{db: db}, nil
 }
 
 // Append ...
@@ -43,17 +59,22 @@ func (d *Postgres) Append(streamName string, events ...*pbMessaging.Event) error
 		return fmt.Errorf("could not generate table name: %v", err)
 	}
 
+	q := fmt.Sprintf(insertEventSQLf, pq.QuoteIdentifier(tableName))
+	log.Debug().Str("query", q).Msgf("[%T::Append] inserting event", d)
+
 	for _, event := range events {
 		_, err := d.db.Exec(
-			fmt.Sprintf("INSERT INTO %s(id, type, payload, time) VALUES ($1, $2, $3, $4)", tableName),
+			q,
 			event.GetId(),
 			event.GetType(),
-			string(event.Payload.Value),
+			string(event.Payload.GetValue()),
+			string(event.Metadata.GetValue()),
+			event.GetVersion(),
 			event.GetTime(),
 		)
 
 		if err, ok := err.(*pq.Error); ok {
-			log.Error().AnErr("could execute insert query", err)
+			return err
 		}
 	}
 
@@ -91,23 +112,23 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 		return nil, fmt.Errorf("could not generate table name: %v", err)
 	}
 
-	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", tableName)
+	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", pq.QuoteIdentifier(tableName))
 	log.Debug().Str("query", q).Msgf("[%T::ReadStreamEventsForwardAsync] querying count", d)
 
 	r := d.db.QueryRow(q)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not execute query: %v", err)
+		return nil, fmt.Errorf("could not execute event count query: %v", err)
 	}
 
 	var count int64
 	r.Scan(&count)
 
-	q = fmt.Sprintf("SELECT * FROM %s ORDER BY version", tableName)
+	q = fmt.Sprintf("SELECT * FROM %s ORDER BY version", pq.QuoteIdentifier(tableName))
 	log.Debug().Str("query", q).Msgf("[%T::ReadStreamEventsForwardAsync] querying rows", d)
 
 	if rows, err = d.db.Query(q); err != nil {
-		return nil, fmt.Errorf("could not execute query: %v", err)
+		return nil, fmt.Errorf("could not execute events query: %v", err)
 	}
 
 	events := make([]*pbMessaging.Event, 0)
@@ -139,8 +160,55 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 func (d *Postgres) generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
 	switch persistMode {
 	case store.PersistModeSingleTable:
-		return pq.QuoteIdentifier(fmt.Sprintf("events_%s", streamName)), nil
+		return fmt.Sprintf("events_%s", streamName), nil
 	default:
 		return "", store.ErrInvalidTableName
 	}
+}
+
+// CreateStream ...
+func (d *Postgres) CreateStream(streamName string) (*store.Stream, error) {
+	tableName, err := d.generateTableName(store.PersistModeSingleTable, streamName)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not generate table name: %v", err)
+	}
+
+	query := fmt.Sprintf(createStreamSQLf, pq.QuoteIdentifier(tableName))
+	log.Debug().Str("query", query).Msgf("[%T::Append] creating stream table", d)
+
+	_, err = d.db.Exec(query)
+
+	if err, ok := err.(*pq.Error); ok {
+		return nil, fmt.Errorf("could not execute create stream query: %v", err)
+	}
+
+	return store.NewStream(tableName, nil), nil
+}
+
+// HasStream ...
+func (d *Postgres) HasStream(streamName string) (bool, error) {
+	tableName, err := d.generateTableName(store.PersistModeSingleTable, streamName)
+
+	if err != nil {
+		return false, fmt.Errorf("could not generate table name: %v", err)
+	}
+
+	q := fmt.Sprintf(`
+SELECT EXISTS (
+   SELECT FROM information_schema.tables 
+   WHERE  table_schema = '%s'
+   AND    table_name   = '%s'
+);
+	`, "public", tableName)
+
+	var exists bool
+	err = d.db.QueryRow(q).Scan(&exists)
+
+	fmt.Println(q, exists)
+	if err != nil {
+		return false, fmt.Errorf("could not execute query: %v", err)
+	}
+
+	return exists, nil
 }
