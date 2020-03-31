@@ -3,6 +3,7 @@ package store
 import (
 	"errors"
 
+	"github.com/happendb/happendb/internal/logtime"
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 )
 
@@ -18,12 +19,6 @@ var (
 	// ErrInvalidTableName ...
 	ErrInvalidTableName = errors.New("invalid table name")
 )
-
-type driver interface {
-	AsyncReaderStore
-	SyncReaderStore
-	WriteOnlyStore
-}
 
 // AsyncReaderStore ...
 type AsyncReaderStore interface {
@@ -50,7 +45,7 @@ type WriteOnlyStore interface {
 type PersistentStoreOption = func(*PersistentStore)
 
 // WithDriver ...
-func WithDriver(d driver) PersistentStoreOption {
+func WithDriver(d Driver) PersistentStoreOption {
 	return func(s *PersistentStore) {
 		s.driver = d
 	}
@@ -65,7 +60,7 @@ func WithPersistMode(m PersistMode) PersistentStoreOption {
 
 // PersistentStore ...
 type PersistentStore struct {
-	driver      driver
+	driver      Driver
 	persistMode PersistMode
 }
 
@@ -84,15 +79,37 @@ func NewPersistentStore(opts ...PersistentStoreOption) (*PersistentStore, error)
 
 // Append ...
 func (s *PersistentStore) Append(streamName string, events ...*pbMessaging.Event) error {
+	defer logtime.Elapsedf("%T::Append", s)()
+
+	exists, err := s.driver.HasStream(streamName)
+
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		if _, err := s.driver.CreateStream(streamName); err != nil {
+			return err
+		}
+	}
+
 	return s.driver.Append(streamName, events...)
 }
 
 // ReadStreamEventsForward ...
-func (s *PersistentStore) ReadStreamEventsForward(streamName string, offset uint64, limit uint64) ([]*pbMessaging.Event, error) {
-	return s.driver.ReadStreamEventsForward(streamName, offset, limit)
+func (s *PersistentStore) ReadStreamEventsForward(streamName string, offset uint64, limit uint64) (events []*pbMessaging.Event, err error) {
+	defer logtime.Elapsedf("%T::ReadStreamEventsForward", s)()
+
+	events, err = s.driver.ReadStreamEventsForward(streamName, offset, limit)
+
+	return
 }
 
 // ReadStreamEventsForwardAsync ...
-func (s *PersistentStore) ReadStreamEventsForwardAsync(streamName string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error) {
-	return s.driver.ReadStreamEventsForwardAsync(streamName, offset, limit)
+func (s *PersistentStore) ReadStreamEventsForwardAsync(streamName string, offset uint64, limit uint64) (eventsCh <-chan *pbMessaging.Event, err error) {
+	defer logtime.Elapsedf("%T::ReadStreamEventsForwardAsync", s)()
+
+	eventsCh, err = s.driver.ReadStreamEventsForwardAsync(streamName, offset, limit)
+
+	return
 }
