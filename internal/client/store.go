@@ -35,6 +35,8 @@ func NewStoreClient() (cli *StoreClient, err error) {
 		writeOnlyClient: pbStore.NewWriteOnlyServiceClient(conn),
 	}
 
+	log.Debug().Msgf("[%T::NewStoreClient] connected", cli)
+
 	return
 }
 
@@ -72,7 +74,7 @@ func (c *StoreClient) ReadStreamEventsForwardAsync(ctx context.Context, req *pbS
 			return nil, err
 		}
 
-		log.Debug().Interface("event", event).Msg("event received")
+		log.Debug().Interface("event_id", event.GetId()).Msg("event received")
 	}
 }
 
