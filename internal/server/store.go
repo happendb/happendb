@@ -6,7 +6,6 @@ import (
 	"io"
 	"net"
 
-	"github.com/happendb/happendb/internal/logtime"
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/driver"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
@@ -70,8 +69,6 @@ func (s *StoreServer) Run(args []string, stdin io.Reader, stdout io.Writer) erro
 
 // ReadStreamEventsForward ...
 func (s *StoreServer) ReadStreamEventsForward(ctx context.Context, req *pbStore.SyncReadStreamEventsForwardRequest) (*pbStore.SyncReadStreamEventsForwardResponse, error) {
-	defer logtime.Elapsedf("%T::ReadStreamEventsForward", s)()
-
 	events, err := s.readOnlyStore.ReadStreamEventsForward(req.GetStream(), req.GetStart(), req.GetCount())
 
 	if err != nil {
@@ -85,8 +82,6 @@ func (s *StoreServer) ReadStreamEventsForward(ctx context.Context, req *pbStore.
 
 // ReadStreamEventsForwardAsync ...
 func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.AsyncReadStreamEventsForwardRequest, stream pbStore.AsyncReaderService_ReadStreamEventsForwardAsyncServer) error {
-	defer logtime.Elapsedf("%T::ReadStreamEventsForwardAsync", s)()
-
 	eventsChannel, err := s.readOnlyStore.ReadStreamEventsForwardAsync(req.GetStream(), req.GetStart(), req.GetCount())
 
 	if err != nil {
@@ -102,8 +97,6 @@ func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.AsyncReadStreamE
 
 // Append ...
 func (s *StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*pbStore.AppendResponse, error) {
-	defer logtime.Elapsedf("%T::Append", s)()
-
 	err := s.writeOnlyStore.Append(req.GetStreamName(), req.GetEvents()...)
 
 	if err != nil {
