@@ -2,87 +2,42 @@ package main
 
 import (
 	"context"
-	"io"
 	"os"
 
 	"github.com/happendb/happendb/internal/client"
 	pb "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	if err := run(os.Args[1:], os.Stdin, os.Stdout); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func run(args []string, stdin io.Reader, stdout io.Writer) error {
-	aggregateID := args[0]
-	start := uint64(0)
-	count := uint64(100)
+	var (
+		args         = os.Args[1:]
+		start uint64 = 0
+		count uint64 = 100
+	)
 
 	client, err := client.NewStoreClient()
 
 	if err != nil {
-		return err
+		log.Fatal().Err(err).Msg("could not create store client")
 	}
 
 	_, err = client.ReadStreamEventsForwardAsync(context.Background(), &pb.AsyncReadStreamEventsForwardRequest{
-		Stream: aggregateID,
+		Stream: args[0],
 		Start:  start,
 		Count:  count,
 	})
 
 	if err != nil {
-		return err
+		log.Fatal().Err(err).Msg("could not read stream events forward async")
 	}
 
 	_, err = client.ReadStreamEventsForward(context.Background(), &pb.SyncReadStreamEventsForwardRequest{
-		Stream: aggregateID,
+		Stream: args[0],
 		Start:  start,
 		Count:  count,
 	})
-
-	if err != nil {
-		return err
-	}
-
-	// uuid, err := uuid.NewRandom()
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// now := time.Now()
-
-	// _, err = client.Append(context.Background(), &pb.AppendRequest{
-	// 	StreamName: aggregateID,
-	// 	Events: []*v1.Event{
-	// 		{
-	// 			Id:   uuid.String(),
-	// 			Type: "event.LoggedIn",
-	// 			Time: now.Format("2006-01-02 15:04:05"),
-	// 			Payload: &any.Any{
-	// 				Value: []byte(`
-	// {
-	//   "id": 92,
-	//   "first_name": "Gabey",
-	//   "last_name": "Kimbley",
-	//   "email": "gkimbley2j@businessweek.com",
-	//   "gender": "Female",
-	//   "ip_address": "13.242.243.177"
-	// }
-	// `),
-	// 			},
-	// 		},
-	// 	},
-	// })
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	return nil
 }

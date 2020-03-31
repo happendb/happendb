@@ -1,27 +1,27 @@
 package main
 
 import (
-	"io"
 	"os"
+	"time"
 
 	"github.com/happendb/happendb/internal/server"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
+	log.Logger = log.Output(zerolog.ConsoleWriter{
+		Out:        os.Stderr,
+		TimeFormat: time.RFC3339Nano,
+	})
 
-	if err := run(os.Args[1:], os.Stdin, os.Stdout); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func run(args []string, stdin io.Reader, stdout io.Writer) error {
 	srv, err := server.NewStoreServer()
 
 	if err != nil {
-		return err
+		log.Fatal().Err(err).Msg("could not create store server")
 	}
 
-	return srv.Run()
+	if err := srv.Run(os.Args[1:], os.Stdin, os.Stdout); err != nil {
+		log.Fatal().Err(err).Msg("failed to run")
+	}
 }
