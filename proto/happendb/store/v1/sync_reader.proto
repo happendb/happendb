@@ -7,16 +7,16 @@ import "happendb/messaging/v1/event.proto";
 option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/store/v1";
 
 service SyncReaderService {
-  rpc ReadStreamEventsForward(SyncReadStreamEventsForwardRequest)
-      returns (SyncReadStreamEventsForwardResponse);
+  rpc ReadEventsForward(SyncReadEventsForwardRequest)
+      returns (SyncReadEventsForwardResponse);
 }
 
-message SyncReadStreamEventsForwardRequest {
+message SyncReadEventsForwardRequest {
   string stream = 1;
   uint64 start = 2;
   uint64 count = 3;
 }
 
-message SyncReadStreamEventsForwardResponse {
+message SyncReadEventsForwardResponse {
   repeated happendb.messaging.v1.Event events = 1;
 }

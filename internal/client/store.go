@@ -40,11 +40,11 @@ func NewStoreClient() (cli *StoreClient, err error) {
 	return
 }
 
-// ReadStreamEventsForward ...
-func (c *StoreClient) ReadStreamEventsForward(ctx context.Context, req *pbStore.SyncReadStreamEventsForwardRequest, opts ...grpc.CallOption) (*pbStore.SyncReadStreamEventsForwardResponse, error) {
-	defer logtime.Elapsedf("%T::ReadStreamEventsForward", c)()
+// ReadEventsForward ...
+func (c *StoreClient) ReadEventsForward(ctx context.Context, req *pbStore.SyncReadEventsForwardRequest, opts ...grpc.CallOption) (*pbStore.SyncReadEventsForwardResponse, error) {
+	defer logtime.Elapsedf("%T::ReadEventsForward", c)()
 
-	res, err := c.syncReader.ReadStreamEventsForward(ctx, req, opts...)
+	res, err := c.syncReader.ReadEventsForward(ctx, req, opts...)
 
 	if err != nil {
 		return nil, err
@@ -53,11 +53,11 @@ func (c *StoreClient) ReadStreamEventsForward(ctx context.Context, req *pbStore.
 	return res, nil
 }
 
-// ReadStreamEventsForwardAsync ...
-func (c *StoreClient) ReadStreamEventsForwardAsync(ctx context.Context, req *pbStore.AsyncReadStreamEventsForwardRequest, opts ...grpc.CallOption) (pbStore.AsyncReaderService_ReadStreamEventsForwardAsyncClient, error) {
-	defer logtime.Elapsedf("%T::ReadStreamEventsForwardAsync", c)()
+// ReadEventsForwardAsync ...
+func (c *StoreClient) ReadEventsForwardAsync(ctx context.Context, req *pbStore.AsyncReadEventsForwardRequest, opts ...grpc.CallOption) (pbStore.AsyncReaderService_ReadEventsForwardAsyncClient, error) {
+	defer logtime.Elapsedf("%T::ReadEventsForwardAsync", c)()
 
-	stream, err := c.asyncReader.ReadStreamEventsForwardAsync(ctx, req, opts...)
+	stream, err := c.asyncReader.ReadEventsForwardAsync(ctx, req, opts...)
 
 	if err != nil {
 		return nil, err

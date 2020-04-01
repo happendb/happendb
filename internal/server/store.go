@@ -21,8 +21,8 @@ type StoreServer struct {
 }
 
 // NewStoreServer ...
-func NewStoreServer() (srv *StoreServer, err error) {
-	driver, err := driver.NewPostgresDriver()
+func NewStoreServer(dsn string) (srv *StoreServer, err error) {
+	driver, err := driver.NewPostgresDriver(dsn)
 
 	if err != nil {
 		return
@@ -67,22 +67,22 @@ func (s *StoreServer) Run(args []string, stdin io.Reader, stdout io.Writer) erro
 	return s.grpcServer.Serve(lis)
 }
 
-// ReadStreamEventsForward ...
-func (s *StoreServer) ReadStreamEventsForward(ctx context.Context, req *pbStore.SyncReadStreamEventsForwardRequest) (*pbStore.SyncReadStreamEventsForwardResponse, error) {
-	events, err := s.readOnlyStore.ReadStreamEventsForward(req.GetStream(), req.GetStart(), req.GetCount())
+// ReadEventsForward ...
+func (s *StoreServer) ReadEventsForward(ctx context.Context, req *pbStore.SyncReadEventsForwardRequest) (*pbStore.SyncReadEventsForwardResponse, error) {
+	events, err := s.readOnlyStore.ReadEventsForward(req.GetStream(), req.GetStart(), req.GetCount())
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &pbStore.SyncReadStreamEventsForwardResponse{
+	return &pbStore.SyncReadEventsForwardResponse{
 		Events: events,
 	}, err
 }
 
-// ReadStreamEventsForwardAsync ...
-func (s *StoreServer) ReadStreamEventsForwardAsync(req *pbStore.AsyncReadStreamEventsForwardRequest, stream pbStore.AsyncReaderService_ReadStreamEventsForwardAsyncServer) error {
-	eventsChannel, err := s.readOnlyStore.ReadStreamEventsForwardAsync(req.GetStream(), req.GetStart(), req.GetCount())
+// ReadEventsForwardAsync ...
+func (s *StoreServer) ReadEventsForwardAsync(req *pbStore.AsyncReadEventsForwardRequest, stream pbStore.AsyncReaderService_ReadEventsForwardAsyncServer) error {
+	eventsChannel, err := s.readOnlyStore.ReadEventsForwardAsync(req.GetStream(), req.GetStart(), req.GetCount())
 
 	if err != nil {
 		return err

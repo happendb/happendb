@@ -35,7 +35,7 @@ func main() {
 		fail("could not create store client", err)
 	}
 
-	cli, err := client.ReadStreamEventsForwardAsync(ctx, &pbStore.AsyncReadStreamEventsForwardRequest{
+	cli, err := client.ReadEventsForwardAsync(ctx, &pbStore.AsyncReadEventsForwardRequest{
 		Stream: args[0],
 		Start:  start,
 		Count:  count,
@@ -47,7 +47,7 @@ func main() {
 
 	_ = cli
 
-	res, err := client.ReadStreamEventsForward(ctx, &pbStore.SyncReadStreamEventsForwardRequest{
+	res, err := client.ReadEventsForward(ctx, &pbStore.SyncReadEventsForwardRequest{
 		Stream: args[0],
 		Start:  start,
 		Count:  count,
