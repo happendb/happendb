@@ -23,7 +23,9 @@ CREATE TABLE %s (
 );
 `
 
-	insertEventSQLf = `INSERT INTO %s(id, type, payload, metadata, version, time) VALUES ($1, $2, $3, $4, $5, $6);`
+	insertEventSQLf = `
+INSERT INTO %s(id, type, payload, metadata, version, time) VALUES ($1, $2, $3, $4, $5, $6);
+	`
 )
 
 // Postgres ...
@@ -108,7 +110,19 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 		tableName string
 	)
 
-	if tableName, err = d.generateTableName(store.PersistModeSingleTable, aggregateID); err != nil {
+	hasStream, err := d.HasStream(aggregateID)
+
+	if err != nil {
+		return nil, fmt.Errorf("could not check if stream exists: %v", err)
+	}
+
+	if !hasStream {
+		d.CreateStream(aggregateID)
+	}
+
+	tableName, err = d.generateTableName(store.PersistModeSingleTable, aggregateID)
+
+	if err != nil {
 		return nil, fmt.Errorf("could not generate table name: %v", err)
 	}
 
@@ -205,7 +219,6 @@ SELECT EXISTS (
 	var exists bool
 	err = d.db.QueryRow(q).Scan(&exists)
 
-	fmt.Println(q, exists)
 	if err != nil {
 		return false, fmt.Errorf("could not execute query: %v", err)
 	}
