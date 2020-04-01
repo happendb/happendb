@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -34,20 +35,47 @@ func main() {
 		fail("could not create store client", err)
 	}
 
-	t := time.Now()
-	events := []*pbMessaging.Event{}
+	cli, err := client.ReadStreamEventsForwardAsync(ctx, &pbStore.AsyncReadStreamEventsForwardRequest{
+		Stream: args[0],
+		Start:  start,
+		Count:  count,
+	})
 
-	for i := 0; i < 3; i++ {
+	if err != nil {
+		fail("could not read stream events forward async", err)
+	}
+
+	_ = cli
+
+	res, err := client.ReadStreamEventsForward(ctx, &pbStore.SyncReadStreamEventsForwardRequest{
+		Stream: args[0],
+		Start:  start,
+		Count:  count,
+	})
+
+	currentVersion := uint64(0)
+	events := res.GetEvents()
+
+	if len(events) > 0 {
+		currentVersion = events[len(events)-1].GetVersion()
+	}
+
+	fmt.Println("currentVersion", currentVersion)
+
+	t := time.Now()
+	newEvents := []*pbMessaging.Event{}
+
+	for i := 1; i <= 3; i++ {
 		uuid, err := uuid.NewRandom()
 
 		if err != nil {
 			fail("failed to generate uuid", err)
 		}
 
-		events = append(events, &pbMessaging.Event{
+		newEvents = append(newEvents, &pbMessaging.Event{
 			Id:      uuid.String(),
 			Time:    t.Format(time.RFC3339),
-			Version: uint64(4 + i),
+			Version: currentVersion + uint64(i),
 			Metadata: &any.Any{
 				Value: []byte("{}"),
 			},
@@ -66,29 +94,13 @@ func main() {
 
 	_, err = client.Append(ctx, &pbStore.AppendRequest{
 		StreamName:      args[0],
-		ExpectedVersion: 4,
-		Events:          events,
+		ExpectedVersion: uint64(len(events) + len(newEvents)),
+		Events:          newEvents,
 	})
 
 	if err != nil {
 		fail("could not append events", err)
 	}
-
-	_, err = client.ReadStreamEventsForwardAsync(ctx, &pbStore.AsyncReadStreamEventsForwardRequest{
-		Stream: args[0],
-		Start:  start,
-		Count:  count,
-	})
-
-	if err != nil {
-		fail("could not read stream events forward async", err)
-	}
-
-	_, err = client.ReadStreamEventsForward(ctx, &pbStore.SyncReadStreamEventsForwardRequest{
-		Stream: args[0],
-		Start:  start,
-		Count:  count,
-	})
 }
 
 func fail(msg string, err error) {
