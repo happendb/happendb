@@ -117,7 +117,13 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 	}
 
 	if !hasStream {
-		d.CreateStream(aggregateID)
+		stream, err := d.CreateStream(aggregateID)
+
+		if err != nil {
+			return nil, fmt.Errorf("could not create stream: %v", err)
+		}
+
+		_ = stream
 	}
 
 	tableName, err = d.generateTableName(store.PersistModeSingleTable, aggregateID)
