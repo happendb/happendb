@@ -6,12 +6,13 @@ import pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging
 type Stream struct {
 	Name string
 
-	events []*pbMessaging.Event
+	events         []*pbMessaging.Event
+	currentVersion uint64
 }
 
 // NewStream ...
 func NewStream(name string, events ...*pbMessaging.Event) *Stream {
-	return &Stream{name, events}
+	return &Stream{name, events, events[len(events)-1].GetVersion()}
 }
 
 // Iter ...
