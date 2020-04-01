@@ -15,7 +15,7 @@ func main() {
 		TimeFormat: time.RFC3339Nano,
 	})
 
-	srv, err := server.NewStoreServer()
+	srv, err := server.NewStoreServer("sslmode=disable pgsql:host=localhost;port=15432;dbname=happendb_test;user=postgres;password=123")
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("could not create store server")
