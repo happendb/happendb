@@ -35,10 +35,14 @@ type Postgres struct {
 }
 
 // NewPostgresDriver ...
-func NewPostgresDriver() (*Postgres, error) {
-	db, err := sql.Open("postgres", "host=localhost dbname=happendb user=postgres password=123 sslmode=disable")
+func NewPostgresDriver(dsn string) (*Postgres, error) {
+	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Ping(); err != nil {
 		return nil, err
 	}
 
@@ -85,11 +89,11 @@ func (d *Postgres) Append(streamName string, events ...*pbMessaging.Event) error
 	return nil
 }
 
-// ReadStreamEventsForward ...
-func (d *Postgres) ReadStreamEventsForward(aggregateID string, offset uint64, limit uint64) ([]*pbMessaging.Event, error) {
+// ReadEventsForward ...
+func (d *Postgres) ReadEventsForward(aggregateID string, offset uint64, limit uint64) ([]*pbMessaging.Event, error) {
 	events := make([]*pbMessaging.Event, 0)
 
-	eventCh, err := d.ReadStreamEventsForwardAsync(aggregateID, offset, limit)
+	eventCh, err := d.ReadEventsForwardAsync(aggregateID, offset, limit)
 
 	if err != nil {
 		return nil, err
@@ -102,8 +106,8 @@ func (d *Postgres) ReadStreamEventsForward(aggregateID string, offset uint64, li
 	return events, nil
 }
 
-// ReadStreamEventsForwardAsync ...
-func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error) {
+// ReadEventsForwardAsync ...
+func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error) {
 	var (
 		err       error
 		rows      *sql.Rows
@@ -133,7 +137,7 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 	}
 
 	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", pq.QuoteIdentifier(tableName))
-	log.Debug().Str("query", q).Msgf("[%T::ReadStreamEventsForwardAsync] querying count", d)
+	log.Debug().Str("query", q).Msgf("[%T::ReadEventsForwardAsync] querying count", d)
 
 	r := d.db.QueryRow(q)
 
@@ -145,7 +149,7 @@ func (d *Postgres) ReadStreamEventsForwardAsync(aggregateID string, offset uint6
 	r.Scan(&count)
 
 	q = fmt.Sprintf("SELECT * FROM %s ORDER BY version", pq.QuoteIdentifier(tableName))
-	log.Debug().Str("query", q).Msgf("[%T::ReadStreamEventsForwardAsync] querying rows", d)
+	log.Debug().Str("query", q).Msgf("[%T::ReadEventsForwardAsync] querying rows", d)
 
 	if rows, err = d.db.Query(q); err != nil {
 		return nil, fmt.Errorf("could not execute events query: %v", err)
@@ -188,6 +192,10 @@ func (d *Postgres) generateTableName(persistMode store.PersistMode, streamName s
 
 // CreateStream ...
 func (d *Postgres) CreateStream(streamName string) (*store.Stream, error) {
+	if streamName == "" {
+		return nil, store.ErrInvalidStreamName(streamName)
+	}
+
 	tableName, err := d.generateTableName(store.PersistModeSingleTable, streamName)
 
 	if err != nil {
@@ -203,7 +211,7 @@ func (d *Postgres) CreateStream(streamName string) (*store.Stream, error) {
 		return nil, fmt.Errorf("could not execute create stream query: %v", err)
 	}
 
-	return store.NewStream(tableName, nil), nil
+	return store.NewStream(streamName), nil
 }
 
 // HasStream ...
@@ -230,4 +238,21 @@ SELECT EXISTS (
 	}
 
 	return exists, nil
+}
+
+// DeleteStream ...
+func (d *Postgres) DeleteStream(streamName string) error {
+	tableName, err := d.generateTableName(store.PersistModeSingleTable, streamName)
+
+	if err != nil {
+		return fmt.Errorf("could not generate table name: %v", err)
+	}
+
+	query := fmt.Sprintf("DROP TABLE %s.%s", "public", pq.QuoteIdentifier(tableName))
+
+	if _, err = d.db.Exec(query); err != nil {
+		return fmt.Errorf("could not execute delete stream query: %v", err)
+	}
+
+	return nil
 }

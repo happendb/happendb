@@ -12,7 +12,13 @@ type Stream struct {
 
 // NewStream ...
 func NewStream(name string, events ...*pbMessaging.Event) *Stream {
-	return &Stream{name, events, events[len(events)-1].GetVersion()}
+	var currentVersion uint64
+
+	if len(events) > 0 {
+		currentVersion = events[len(events)-1].GetVersion()
+	}
+
+	return &Stream{name, events, currentVersion}
 }
 
 // Iter ...
