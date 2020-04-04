@@ -82,8 +82,10 @@ func (d *Postgres) Append(streamName string, version uint64, events ...*pbMessag
 			event.GetTime(),
 		)
 
-		if err, ok := err.(*pq.Error); ok {
-			return err
+		if err != nil {
+			if err, ok := err.(*pq.Error); ok {
+				return err
+			}
 		}
 	}
 
