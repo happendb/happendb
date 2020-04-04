@@ -66,7 +66,7 @@ func (d *Postgres) Append(streamName string, events ...*pbMessaging.Event) error
 	}
 
 	q := fmt.Sprintf(insertEventSQLf, pq.QuoteIdentifier(tableName))
-	log.Debug().Str("query", q).Msgf("[%T::Append] inserting event", d)
+	log.Debug().Str("query", q).Msg("[Append] inserting event")
 
 	for _, event := range events {
 		_, err := d.db.Exec(
@@ -137,7 +137,7 @@ func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, lim
 	}
 
 	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", pq.QuoteIdentifier(tableName))
-	log.Debug().Str("query", q).Msgf("[%T::ReadEventsForwardAsync] querying count", d)
+	log.Debug().Str("query", q).Msg("[ReadEventsForwardAsync] querying count")
 
 	r := d.db.QueryRow(q)
 
@@ -149,7 +149,7 @@ func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, lim
 	r.Scan(&count)
 
 	q = fmt.Sprintf("SELECT * FROM %s ORDER BY version", pq.QuoteIdentifier(tableName))
-	log.Debug().Str("query", q).Msgf("[%T::ReadEventsForwardAsync] querying rows", d)
+	log.Debug().Str("query", q).Msg("[ReadEventsForwardAsync] querying rows")
 
 	if rows, err = d.db.Query(q); err != nil {
 		return nil, fmt.Errorf("could not execute events query: %v", err)
@@ -203,7 +203,7 @@ func (d *Postgres) CreateStream(streamName string) (*store.Stream, error) {
 	}
 
 	query := fmt.Sprintf(createStreamSQLf, pq.QuoteIdentifier(tableName))
-	log.Debug().Str("query", query).Msgf("[%T::Append] creating stream table", d)
+	log.Debug().Str("query", query).Msg("[Append] creating stream table")
 
 	_, err = d.db.Exec(query)
 

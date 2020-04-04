@@ -55,7 +55,7 @@ const (
 )
 
 // Run ...
-func (s *StoreServer) Run(args []string, stdin io.Reader, stdout io.Writer) error {
+func (s *StoreServer) Run(_ context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
 	log.Info().Msgf("listening on port %v", port)
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%v", port))

@@ -1,27 +1,29 @@
 package main
 
 import (
+	"context"
 	"os"
-	"time"
 
+	"github.com/happendb/happendb/internal/config"
 	"github.com/happendb/happendb/internal/server"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{
-		Out:        os.Stderr,
-		TimeFormat: time.RFC3339Nano,
-	})
+	config.InitLogging()
 
-	srv, err := server.NewStoreServer("sslmode=disable pgsql:host=localhost;port=15432;dbname=happendb_test;user=postgres;password=123")
+	ctx := context.Background()
+	srv, err := server.NewStoreServer("sslmode=disable host=localhost port=5432 dbname=happendb user=postgres password=123")
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("could not create store server")
+		fail("could not create store server", err)
 	}
 
-	if err := srv.Run(os.Args[1:], os.Stdin, os.Stdout); err != nil {
-		log.Fatal().Err(err).Msg("failed to run")
+	if err := srv.Run(ctx, os.Args[1:], os.Stdin, os.Stdout); err != nil {
+		fail("failed to run", err)
 	}
+}
+
+func fail(msg string, err error) {
+	log.Fatal().Err(err).Msg(msg)
 }

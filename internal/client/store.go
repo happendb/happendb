@@ -8,7 +8,6 @@ import (
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
 	"github.com/rs/zerolog/log"
-
 	"google.golang.org/grpc"
 )
 
@@ -35,14 +34,14 @@ func NewStoreClient() (cli *StoreClient, err error) {
 		writeOnlyClient: pbStore.NewWriteOnlyServiceClient(conn),
 	}
 
-	log.Debug().Msgf("[%T::NewStoreClient] connected", cli)
+	log.Debug().Msg("client connected")
 
 	return
 }
 
 // ReadEventsForward ...
 func (c *StoreClient) ReadEventsForward(ctx context.Context, req *pbStore.SyncReadEventsForwardRequest, opts ...grpc.CallOption) (*pbStore.SyncReadEventsForwardResponse, error) {
-	defer logtime.Elapsedf("%T::ReadEventsForward", c)()
+	defer logtime.Elapsedf("ReadEventsForward")()
 
 	res, err := c.syncReader.ReadEventsForward(ctx, req, opts...)
 
@@ -55,7 +54,7 @@ func (c *StoreClient) ReadEventsForward(ctx context.Context, req *pbStore.SyncRe
 
 // ReadEventsForwardAsync ...
 func (c *StoreClient) ReadEventsForwardAsync(ctx context.Context, req *pbStore.AsyncReadEventsForwardRequest, opts ...grpc.CallOption) (pbStore.AsyncReaderService_ReadEventsForwardAsyncClient, error) {
-	defer logtime.Elapsedf("%T::ReadEventsForwardAsync", c)()
+	defer logtime.Elapsedf("ReadEventsForwardAsync")()
 
 	stream, err := c.asyncReader.ReadEventsForwardAsync(ctx, req, opts...)
 
@@ -80,7 +79,7 @@ func (c *StoreClient) ReadEventsForwardAsync(ctx context.Context, req *pbStore.A
 
 // Append ...
 func (c *StoreClient) Append(ctx context.Context, req *pbStore.AppendRequest, opts ...grpc.CallOption) (*pbStore.AppendResponse, error) {
-	defer logtime.Elapsedf("%T::Append", c)()
+	defer logtime.Elapsedf("Append")()
 
 	res, err := c.writeOnlyClient.Append(ctx, req, opts...)
 

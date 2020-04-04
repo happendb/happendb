@@ -43,7 +43,7 @@ func NewPersistentStore(opts ...PersistentStoreOption) (*PersistentStore, error)
 
 // Append ...
 func (s *PersistentStore) Append(streamName string, events ...*pbMessaging.Event) error {
-	defer logtime.Elapsedf("%T::Append", s)()
+	defer logtime.Elapsedf("Append")()
 
 	exists, err := s.driver.HasStream(streamName)
 
@@ -62,7 +62,7 @@ func (s *PersistentStore) Append(streamName string, events ...*pbMessaging.Event
 
 // ReadEventsForward ...
 func (s *PersistentStore) ReadEventsForward(streamName string, offset uint64, limit uint64) (events []*pbMessaging.Event, err error) {
-	defer logtime.Elapsedf("%T::ReadEventsForward", s)()
+	defer logtime.Elapsedf("ReadEventsForward")()
 
 	events, err = s.driver.ReadEventsForward(streamName, offset, limit)
 
@@ -71,7 +71,7 @@ func (s *PersistentStore) ReadEventsForward(streamName string, offset uint64, li
 
 // ReadEventsForwardAsync ...
 func (s *PersistentStore) ReadEventsForwardAsync(streamName string, offset uint64, limit uint64) (eventsCh <-chan *pbMessaging.Event, err error) {
-	defer logtime.Elapsedf("%T::ReadEventsForwardAsync", s)()
+	defer logtime.Elapsedf("ReadEventsForwardAsync")()
 
 	eventsCh, err = s.driver.ReadEventsForwardAsync(streamName, offset, limit)
 

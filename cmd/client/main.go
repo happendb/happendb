@@ -2,28 +2,23 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/google/uuid"
 	"github.com/happendb/happendb/internal/client"
+	"github.com/happendb/happendb/internal/config"
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	pbStore "github.com/happendb/happendb/proto/gen/go/happendb/store/v1"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{
-		Out:        os.Stderr,
-		TimeFormat: time.RFC3339Nano,
-	})
-
-	ctx := context.Background()
+	config.InitLogging()
 
 	var (
+		ctx          = context.Background()
 		args         = os.Args[1:]
 		start uint64 = 0
 		count uint64 = 100
@@ -59,8 +54,6 @@ func main() {
 	if len(events) > 0 {
 		currentVersion = events[len(events)-1].GetVersion()
 	}
-
-	fmt.Println("currentVersion", currentVersion)
 
 	t := time.Now()
 	newEvents := []*pbMessaging.Event{}
