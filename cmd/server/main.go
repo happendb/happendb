@@ -11,7 +11,6 @@ import (
 
 func main() {
 	config.InitLogging()
-
 	ctx := context.Background()
 	srv, err := server.NewStoreServer("sslmode=disable host=localhost port=5432 dbname=happendb user=postgres password=123")
 
