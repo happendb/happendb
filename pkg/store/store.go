@@ -44,5 +44,5 @@ type ReaderStore interface {
 
 // WriteOnlyStore ...
 type WriteOnlyStore interface {
-	Append(streamName string, events ...*pbMessaging.Event) error
+	Append(streamName string, version uint64, events ...*pbMessaging.Event) error
 }

@@ -13,6 +13,10 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	port = 9000
+)
+
 // StoreServer ...
 type StoreServer struct {
 	grpcServer     *grpc.Server
@@ -22,7 +26,7 @@ type StoreServer struct {
 
 // NewStoreServer ...
 func NewStoreServer(dsn string) (srv *StoreServer, err error) {
-	driver, err := driver.NewPostgresDriver(dsn)
+	driver, err := driver.NewPostgresDriver(dsn, store.PersistModeSingleTable)
 
 	if err != nil {
 		return
@@ -49,10 +53,6 @@ func NewStoreServer(dsn string) (srv *StoreServer, err error) {
 
 	return
 }
-
-const (
-	port = 9000
-)
 
 // Run ...
 func (s *StoreServer) Run(_ context.Context, args []string, stdin io.Reader, stdout io.Writer) error {
@@ -97,7 +97,7 @@ func (s *StoreServer) ReadEventsForwardAsync(req *pbStore.AsyncReadEventsForward
 
 // Append ...
 func (s *StoreServer) Append(ctx context.Context, req *pbStore.AppendRequest) (*pbStore.AppendResponse, error) {
-	err := s.writeOnlyStore.Append(req.GetStreamName(), req.GetEvents()...)
+	err := s.writeOnlyStore.Append(req.GetStreamName(), req.GetExpectedVersion(), req.GetEvents()...)
 
 	if err != nil {
 		return nil, err

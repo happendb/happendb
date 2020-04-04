@@ -30,12 +30,12 @@ INSERT INTO %s(id, type, payload, metadata, version, time) VALUES ($1, $2, $3, $
 
 // Postgres ...
 type Postgres struct {
-	db      *sql.DB
-	streams map[string]*sql.Rows
+	db          *sql.DB
+	persistMode store.PersistMode
 }
 
 // NewPostgresDriver ...
-func NewPostgresDriver(dsn string) (*Postgres, error) {
+func NewPostgresDriver(dsn string, persistMode store.PersistMode) (*Postgres, error) {
 	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
@@ -46,11 +46,14 @@ func NewPostgresDriver(dsn string) (*Postgres, error) {
 		return nil, err
 	}
 
-	return &Postgres{db: db}, nil
+	return &Postgres{
+		db,
+		persistMode,
+	}, nil
 }
 
 // Append ...
-func (d *Postgres) Append(streamName string, events ...*pbMessaging.Event) error {
+func (d *Postgres) Append(streamName string, version uint64, events ...*pbMessaging.Event) error {
 	var (
 		err       error
 		tableName string
@@ -61,21 +64,21 @@ func (d *Postgres) Append(streamName string, events ...*pbMessaging.Event) error
 		return fmt.Errorf("could not begin transaction: %v", err)
 	}
 
-	if tableName, err = d.generateTableName(store.PersistModeSingleTable, streamName); err != nil {
+	if tableName, err = d.generateTableName(streamName); err != nil {
 		return fmt.Errorf("could not generate table name: %v", err)
 	}
 
 	q := fmt.Sprintf(insertEventSQLf, pq.QuoteIdentifier(tableName))
 	log.Debug().Str("query", q).Msg("[Append] inserting event")
 
-	for _, event := range events {
+	for i, event := range events {
 		_, err := d.db.Exec(
 			q,
 			event.GetId(),
 			event.GetType(),
 			string(event.Payload.GetValue()),
 			string(event.Metadata.GetValue()),
-			event.GetVersion(),
+			1+int(version)+i,
 			event.GetTime(),
 		)
 
@@ -114,23 +117,7 @@ func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, lim
 		tableName string
 	)
 
-	hasStream, err := d.HasStream(aggregateID)
-
-	if err != nil {
-		return nil, fmt.Errorf("could not check if stream exists: %v", err)
-	}
-
-	if !hasStream {
-		stream, err := d.CreateStream(aggregateID)
-
-		if err != nil {
-			return nil, fmt.Errorf("could not create stream: %v", err)
-		}
-
-		_ = stream
-	}
-
-	tableName, err = d.generateTableName(store.PersistModeSingleTable, aggregateID)
+	tableName, err = d.generateTableName(aggregateID)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not generate table name: %v", err)
@@ -181,8 +168,8 @@ func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, lim
 	return ch, nil
 }
 
-func (d *Postgres) generateTableName(persistMode store.PersistMode, streamName string) (string, error) {
-	switch persistMode {
+func (d *Postgres) generateTableName(streamName string) (string, error) {
+	switch d.persistMode {
 	case store.PersistModeSingleTable:
 		return fmt.Sprintf("events_%s", streamName), nil
 	default:
@@ -196,7 +183,7 @@ func (d *Postgres) CreateStream(streamName string) (*store.Stream, error) {
 		return nil, store.ErrInvalidStreamName(streamName)
 	}
 
-	tableName, err := d.generateTableName(store.PersistModeSingleTable, streamName)
+	tableName, err := d.generateTableName(streamName)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not generate table name: %v", err)
@@ -216,7 +203,7 @@ func (d *Postgres) CreateStream(streamName string) (*store.Stream, error) {
 
 // HasStream ...
 func (d *Postgres) HasStream(streamName string) (bool, error) {
-	tableName, err := d.generateTableName(store.PersistModeSingleTable, streamName)
+	tableName, err := d.generateTableName(streamName)
 
 	if err != nil {
 		return false, fmt.Errorf("could not generate table name: %v", err)
@@ -242,13 +229,14 @@ SELECT EXISTS (
 
 // DeleteStream ...
 func (d *Postgres) DeleteStream(streamName string) error {
-	tableName, err := d.generateTableName(store.PersistModeSingleTable, streamName)
+	tableName, err := d.generateTableName(streamName)
 
 	if err != nil {
 		return fmt.Errorf("could not generate table name: %v", err)
 	}
 
 	query := fmt.Sprintf("DROP TABLE %s.%s", "public", pq.QuoteIdentifier(tableName))
+	log.Debug().Str("query", query).Msg("[Append] deleting stream table")
 
 	if _, err = d.db.Exec(query); err != nil {
 		return fmt.Errorf("could not execute delete stream query: %v", err)

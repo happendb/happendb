@@ -10,14 +10,14 @@ import (
 )
 
 func TestPostgresNewDriver(t *testing.T) {
-	driver, err := driver.NewPostgresDriver("sslmode=disable host=localhost port=5432 dbname=happendb_test user=postgres password=123")
+	driver, err := driver.NewPostgresDriver("sslmode=disable host=localhost port=5432 dbname=happendb_test user=postgres password=123", store.PersistModeSingleTable)
 
 	assert.NotNil(t, driver, "expected not nil driver")
 	assert.NoError(t, err)
 }
 
 func TestPostgresNewDriverError(t *testing.T) {
-	driver, err := driver.NewPostgresDriver("ms:'qwe/12[p3klp[bad dsn")
+	driver, err := driver.NewPostgresDriver("ms:'qwe/12[p3klp[bad dsn", store.PersistModeSingleTable)
 
 	assert.Nil(t, driver, "expected nil driver")
 	assert.NotNil(t, err, "expected not nil error")
@@ -36,7 +36,7 @@ func TestPostgresCreateStream(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			driver, err := driver.NewPostgresDriver("sslmode=disable host=localhost port=5432 dbname=happendb_test user=postgres password=123")
+			driver, err := driver.NewPostgresDriver("sslmode=disable host=localhost port=5432 dbname=happendb_test user=postgres password=123", store.PersistModeSingleTable)
 
 			assert.NotNil(t, driver, "%s: expected not nil driver", tt.name)
 			assert.NoError(t, err)
