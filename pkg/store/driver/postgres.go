@@ -11,6 +11,9 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+// EventStreamsTableName ...
+const EventStreamsTableName = "event_streams"
+
 const (
 	createStreamSQLf = `
 CREATE TABLE %s (
@@ -171,6 +174,10 @@ func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, lim
 }
 
 func (d *Postgres) generateTableName(streamName string) (string, error) {
+	if streamName == EventStreamsTableName {
+		return "", store.ErrInvalidTableName
+	}
+
 	switch d.persistMode {
 	case store.PersistModeSingleTable:
 		return fmt.Sprintf("events_%s", streamName), nil

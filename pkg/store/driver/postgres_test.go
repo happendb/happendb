@@ -73,7 +73,7 @@ func TestPostgresCreateStream(t *testing.T) {
 		expectedError  error
 	}{
 		{"CreateStreamOK", "my_stream", &store.Stream{Name: "my_stream"}, nil},
-		{"CreateStreamError", "", nil, errors.New("invalid stream name ''")},
+		{"CreateStreamErrors", "", nil, errors.New("invalid stream name ''")},
 	}
 
 	for _, tt := range tests {
@@ -100,9 +100,12 @@ func TestPostgresCreateStream(t *testing.T) {
 
 func TestPostgresAppend(t *testing.T) {
 	tests := []struct {
-		name string
+		name       string
+		streamName string
+		err        error
 	}{
-		{"AppendOK"},
+		{"AppendOK", "uuid", nil},
+		{"AppendErrors", "event_streams", errors.New("could not generate table name: ")},
 	}
 
 	for _, tt := range tests {
@@ -112,17 +115,25 @@ func TestPostgresAppend(t *testing.T) {
 			assert.NotNil(t, driver, "%s: expected not nil driver", tt.name)
 			assert.NoError(t, err)
 
-			uuid, err := uuid.NewRandom()
+			var streamName string
+
+			if tt.streamName == "uuid" {
+				uuid, err := uuid.NewRandom()
+				assert.NoError(t, err)
+				streamName = uuid.String()
+			} else {
+				streamName = tt.streamName
+			}
 
 			assert.NoError(t, err)
-			aggregateID := uuid.String()
 
 			driver.Append(
-				aggregateID,
+				streamName,
 				1,
 				MakeEvent(t, 1),
 				MakeEvent(t, 2),
-				MakeEvent(t, 3))
+				MakeEvent(t, 3),
+			)
 		})
 	}
 }
