@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"os"
+	"flag"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/any"
@@ -19,7 +19,7 @@ func main() {
 
 	var (
 		ctx          = context.Background()
-		args         = os.Args[1:]
+		args         = flag.Args()
 		start uint64 = 0
 		count uint64 = 100
 	)
@@ -68,7 +68,7 @@ func main() {
 		newEvents = append(newEvents, &pbMessaging.Event{
 			Id:      uuid.String(),
 			Time:    t.Format(time.RFC3339),
-			Version: currentVersion + uint64(i),
+			Version: currentVersion,
 			Metadata: &any.Any{
 				Value: []byte("{}"),
 			},
@@ -87,7 +87,7 @@ func main() {
 
 	_, err = client.Append(ctx, &pbStore.AppendRequest{
 		StreamName:      args[0],
-		ExpectedVersion: uint64(len(events) + len(newEvents)),
+		ExpectedVersion: currentVersion,
 		Events:          newEvents,
 	})
 
