@@ -2,26 +2,15 @@ package store
 
 import (
 	"errors"
-	"fmt"
 
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
-)
-
-// PersistMode ...
-type PersistMode = byte
-
-const (
-	// PersistModeSingleTable ...
-	PersistModeSingleTable PersistMode = iota
 )
 
 var (
 	// ErrInvalidTableName ...
 	ErrInvalidTableName = errors.New("invalid table name")
 	// ErrInvalidStreamName ...
-	ErrInvalidStreamName = func(name string) error {
-		return fmt.Errorf("invalid stream name '%v'", name)
-	}
+	ErrInvalidStreamName = errors.New("invalid stream name")
 	// ErrExpectedVersion ...
 	ErrExpectedVersion = errors.New("expected version should be current version + 1")
 )

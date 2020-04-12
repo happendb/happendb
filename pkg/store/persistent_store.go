@@ -17,24 +17,14 @@ func WithDriver(d Driver) PersistentStoreOption {
 	}
 }
 
-// WithPersistMode ...
-func WithPersistMode(m PersistMode) PersistentStoreOption {
-	return func(s *PersistentStore) {
-		s.persistMode = m
-	}
-}
-
 // PersistentStore ...
 type PersistentStore struct {
-	driver      Driver
-	persistMode PersistMode
+	driver Driver
 }
 
 // NewPersistentStore ...
 func NewPersistentStore(opts ...PersistentStoreOption) (*PersistentStore, error) {
-	store := &PersistentStore{
-		persistMode: PersistModeSingleTable,
-	}
+	store := &PersistentStore{}
 
 	for _, opt := range opts {
 		opt(store)
@@ -47,7 +37,7 @@ func NewPersistentStore(opts ...PersistentStoreOption) (*PersistentStore, error)
 func (s *PersistentStore) Append(streamName string, version uint64, events ...*pbMessaging.Event) error {
 	defer logtime.Elapsedf("Append")()
 
-	exists, err := s.driver.HasStream(streamName)
+	exists, err := s.driver.StreamExists(streamName)
 
 	if err != nil {
 		return err
@@ -73,7 +63,7 @@ func (s *PersistentStore) ReadEventsForward(streamName string, offset uint64, li
 func (s *PersistentStore) ReadEventsForwardAsync(streamName string, offset uint64, limit uint64) (eventsCh <-chan *pbMessaging.Event, err error) {
 	defer logtime.Elapsedf("ReadEventsForwardAsync")()
 
-	hasStream, err := s.driver.HasStream(streamName)
+	hasStream, err := s.driver.StreamExists(streamName)
 
 	if err != nil {
 		return nil, fmt.Errorf("could not check if stream exists: %v", err)

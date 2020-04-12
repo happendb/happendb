@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"net"
@@ -26,7 +27,13 @@ type StoreServer struct {
 
 // NewStoreServer ...
 func NewStoreServer(dsn string) (srv *StoreServer, err error) {
-	driver, err := driver.NewPostgresDriver(dsn, store.PersistModeSingleTable)
+	db, err := sql.Open("postgres", "sslmode=disable host=localhost port=5432 dbname=happendb user=postgres password=123")
+
+	if err != nil {
+		return nil, err
+	}
+
+	driver, err := driver.NewPostgresDriver(db)
 
 	if err != nil {
 		return
@@ -34,7 +41,6 @@ func NewStoreServer(dsn string) (srv *StoreServer, err error) {
 
 	persistentStore, err := store.NewPersistentStore(
 		store.WithDriver(driver),
-		store.WithPersistMode(store.PersistModeSingleTable),
 	)
 
 	if err != nil {
