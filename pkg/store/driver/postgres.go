@@ -31,74 +31,24 @@ INSERT INTO %s(id, type, payload, metadata, version, time) VALUES ($1, $2, $3, $
 	`
 )
 
-// Postgres ...
-type Postgres struct {
-	db          *sql.DB
-	persistMode store.PersistMode
+// PostgresDriver ...
+type PostgresDriver struct {
+	db *sql.DB
 }
 
 // NewPostgresDriver ...
-func NewPostgresDriver(dsn string, persistMode store.PersistMode) (*Postgres, error) {
-	db, err := sql.Open("postgres", dsn)
-
-	if err != nil {
+func NewPostgresDriver(db *sql.DB) (*PostgresDriver, error) {
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 
-	if err = db.Ping(); err != nil {
-		return nil, err
-	}
-
-	return &Postgres{
+	return &PostgresDriver{
 		db,
-		persistMode,
 	}, nil
 }
 
-// Append ...
-func (d *Postgres) Append(streamName string, version uint64, events ...*pbMessaging.Event) error {
-	var (
-		err       error
-		tableName string
-		txn       *sql.Tx
-	)
-
-	if txn, err = d.db.Begin(); err != nil {
-		return fmt.Errorf("could not begin transaction: %v", err)
-	}
-
-	if tableName, err = d.generateTableName(streamName); err != nil {
-		return fmt.Errorf("could not generate table name: %v", err)
-	}
-
-	q := fmt.Sprintf(insertEventSQLf, pq.QuoteIdentifier(tableName))
-	log.Debug().Str("query", q).Msg("[Append] inserting event")
-
-	for i, event := range events {
-		_, err := d.db.Exec(
-			q,
-			event.GetId(),
-			event.GetType(),
-			string(event.Payload.GetValue()),
-			string(event.Metadata.GetValue()),
-			1+int(version)+i,
-			event.GetTime(),
-		)
-
-		if err != nil {
-			if err, ok := err.(*pq.Error); ok {
-				return err
-			}
-		}
-	}
-
-	txn.Commit()
-
-	return nil
-}
-
 // ReadEventsForward ...
-func (d *Postgres) ReadEventsForward(aggregateID string, offset uint64, limit uint64) ([]*pbMessaging.Event, error) {
+func (d *PostgresDriver) ReadEventsForward(aggregateID string, offset uint64, limit uint64) ([]*pbMessaging.Event, error) {
 	events := make([]*pbMessaging.Event, 0)
 
 	eventCh, err := d.ReadEventsForwardAsync(aggregateID, offset, limit)
@@ -115,7 +65,7 @@ func (d *Postgres) ReadEventsForward(aggregateID string, offset uint64, limit ui
 }
 
 // ReadEventsForwardAsync ...
-func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error) {
+func (d *PostgresDriver) ReadEventsForwardAsync(aggregateID string, offset uint64, limit uint64) (<-chan *pbMessaging.Event, error) {
 	var (
 		err       error
 		rows      *sql.Rows
@@ -173,45 +123,76 @@ func (d *Postgres) ReadEventsForwardAsync(aggregateID string, offset uint64, lim
 	return ch, nil
 }
 
-func (d *Postgres) generateTableName(streamName string) (string, error) {
-	if streamName == EventStreamsTableName {
-		return "", store.ErrInvalidTableName
+// Append ...
+func (d *PostgresDriver) Append(streamName string, version uint64, events ...*pbMessaging.Event) error {
+	var (
+		err       error
+		tableName string
+		txn       *sql.Tx
+	)
+
+	exists, err := d.StreamExists(streamName)
+
+	if !exists {
+		_, _ = d.CreateStream(streamName)
 	}
 
-	switch d.persistMode {
-	case store.PersistModeSingleTable:
-		return fmt.Sprintf("events_%s", streamName), nil
-	default:
-		return "", store.ErrInvalidTableName
+	if txn, err = d.db.Begin(); err != nil {
+		return fmt.Errorf("could not begin transaction: %v", err)
 	}
+
+	if tableName, err = d.generateTableName(streamName); err != nil {
+		return fmt.Errorf("could not generate table name: %v", err)
+	}
+
+	q := fmt.Sprintf(insertEventSQLf, pq.QuoteIdentifier(tableName))
+	log.Debug().Str("query", q).Msg("[Append] inserting event")
+
+	for i, event := range events {
+		_, err := d.db.Exec(
+			q,
+			event.GetId(),
+			event.GetType(),
+			string(event.Payload.GetValue()),
+			string(event.Metadata.GetValue()),
+			1+int(version)+i,
+			event.GetTime(),
+		)
+
+		if err != nil {
+			if err, ok := err.(*pq.Error); ok {
+				log.Debug().Msg(err.Error())
+				return err
+			}
+		}
+	}
+
+	if err = txn.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // CreateStream ...
-func (d *Postgres) CreateStream(streamName string) (*store.Stream, error) {
+func (d *PostgresDriver) CreateStream(streamName string) (*store.Stream, error) {
 	if streamName == "" {
-		return nil, store.ErrInvalidStreamName(streamName)
+		return nil, store.ErrInvalidStreamName
 	}
 
-	tableName, err := d.generateTableName(streamName)
-
-	if err != nil {
-		return nil, fmt.Errorf("could not generate table name: %v", err)
-	}
-
+	tableName, _ := d.generateTableName(streamName)
 	query := fmt.Sprintf(createStreamSQLf, pq.QuoteIdentifier(tableName))
 	log.Debug().Str("query", query).Msg("[Append] creating stream table")
 
-	_, err = d.db.Exec(query)
-
-	if err, ok := err.(*pq.Error); ok {
-		return nil, fmt.Errorf("could not execute create stream query: %v", err)
+	if _, err := d.db.Exec(query); err != nil {
+		return nil, err
 	}
 
 	return store.NewStream(streamName), nil
 }
 
-// HasStream ...
-func (d *Postgres) HasStream(streamName string) (bool, error) {
+// StreamExists ...
+func (d *PostgresDriver) StreamExists(streamName string) (bool, error) {
 	tableName, err := d.generateTableName(streamName)
 
 	if err != nil {
@@ -237,7 +218,7 @@ SELECT EXISTS (
 }
 
 // DeleteStream ...
-func (d *Postgres) DeleteStream(streamName string) error {
+func (d *PostgresDriver) DeleteStream(streamName string) error {
 	tableName, err := d.generateTableName(streamName)
 
 	if err != nil {
@@ -252,4 +233,8 @@ func (d *Postgres) DeleteStream(streamName string) error {
 	}
 
 	return nil
+}
+
+func (d *PostgresDriver) generateTableName(streamName string) (string, error) {
+	return fmt.Sprintf("events_%s", streamName), nil
 }
