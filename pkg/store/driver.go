@@ -6,6 +6,7 @@ type Driver interface {
 	SyncReaderStore
 	WriteOnlyStore
 
-	CreateStream(streamName string) (*Stream, error)
-	HasStream(streamName string) (bool, error)
+	StreamExists(name string) (bool, error)
+	CreateStream(name string) (*Stream, error)
+	DeleteStream(name string) error
 }
