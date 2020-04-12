@@ -7,7 +7,6 @@ import (
 	"github.com/happendb/happendb/pkg/store"
 	"github.com/happendb/happendb/pkg/store/driver"
 	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 )
 
