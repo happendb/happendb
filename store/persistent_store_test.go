@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/happendb/happendb/pkg/store"
-	"github.com/happendb/happendb/pkg/store/driver"
-	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
 	"github.com/stretchr/testify/assert"
+
+	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
+	"github.com/happendb/happendb/store"
+	"github.com/happendb/happendb/store/driver"
 )
 
 func MakeDriver(t *testing.T) *driver.MemoryDriver {
@@ -27,13 +28,21 @@ func TestAppend(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			st, err := store.NewPersistentStore(store.WithDriver(MakeDriver(t)))
+			drv := MakeDriver(t)
+			st, err := store.NewPersistentStore(store.WithDriver(drv))
 			assert.NoError(t, err)
 
 			err = st.Append("my-stream", 1, []*pbMessaging.Event{
 				{
 					Id: "ff333f0d-447e-4579-8656-a48fb30ea120",
 				},
+			}...)
+
+			if !assert.Equal(t, tt.expectedError, err) {
+				t.Logf("Expected %v, got %v", tt.expectedError, err)
+			}
+
+			err = st.Append("my-stream", 2, []*pbMessaging.Event{
 				{
 					Id: "bbea682c-c503-487f-88da-40d128b2318e",
 				},
@@ -42,7 +51,15 @@ func TestAppend(t *testing.T) {
 				},
 			}...)
 
-			assert.Equal(t, tt.expectedError, err)
+			if !assert.Equal(t, tt.expectedError, err) {
+				t.Logf("Expected %v, got %v", tt.expectedError, err)
+			}
+
+			assert.Equal(t, []*pbMessaging.Event{
+				{Id: "ff333f0d-447e-4579-8656-a48fb30ea120"},
+				{Id: "bbea682c-c503-487f-88da-40d128b2318e"},
+				{Id: "82e2bb27-6d3a-48d6-8174-27b2f3b3c23f"},
+			}, drv.Streams["my-stream"])
 		})
 	}
 }
@@ -99,12 +116,16 @@ func TestReadEventsForwardAsync(t *testing.T) {
 
 			eventsCh, err := st.ReadEventsForwardAsync(tt.streamName, 0, 3)
 
-			assert.Equal(t, tt.expectedError, err)
+			if !assert.Equal(t, tt.expectedError, err) {
+				t.Logf("expected %v, got %v", tt.expectedError, err)
+			}
 
 			i := 0
 			for e := range eventsCh {
 				i++
-				assert.Equal(t, fmt.Sprintf("%v", i), e.GetId())
+				if !assert.Equal(t, fmt.Sprintf("%v", i), e.GetId()) {
+					t.Logf("expected %v, got %v", tt.expectedError, err)
+				}
 			}
 		})
 	}

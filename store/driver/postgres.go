@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/golang/protobuf/ptypes/any"
-	"github.com/happendb/happendb/pkg/store"
-	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/lib/pq"
 	"github.com/rs/zerolog/log"
+
+	pbMessaging "github.com/happendb/happendb/proto/gen/go/happendb/messaging/v1"
+	"github.com/happendb/happendb/store"
 )
 
 // EventStreamsTableName ...
@@ -101,11 +102,11 @@ func (d *PostgresDriver) ReadEventsForwardAsync(aggregateID string, offset uint6
 
 	for rows.Next() {
 		event := &pbMessaging.Event{
-			Payload:  &any.Any{},
-			Metadata: &any.Any{},
+			Payload:  &structpb.Struct{},
+			Metadata: &structpb.Struct{},
 		}
 
-		if err := rows.Scan(&event.Id, &event.Type, &event.Payload.Value, &event.Metadata.Value, &event.Version, &event.Time); err != nil {
+		if err := rows.Scan(&event.Id, &event.Type, &event.Payload, &event.Metadata, &event.Version, &event.Time); err != nil {
 			return nil, fmt.Errorf("could not scan rows: %v", err)
 		}
 
@@ -153,8 +154,8 @@ func (d *PostgresDriver) Append(streamName string, version uint64, events ...*pb
 			q,
 			event.GetId(),
 			event.GetType(),
-			string(event.Payload.GetValue()),
-			string(event.Metadata.GetValue()),
+			string(event.Payload.String()),
+			string(event.Metadata.String()),
 			1+int(version)+i,
 			event.GetTime(),
 		)

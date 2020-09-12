@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Elapsedf ...
 func Elapsedf(what string, args ...interface{}) func() {
 	t := time.Now()
 

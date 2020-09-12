@@ -2,12 +2,18 @@ syntax = "proto3";
 
 package happendb.store.v1;
 
+import "google/api/annotations.proto";
 import "happendb/messaging/v1/event.proto";
 
 option go_package = "github.com/happendb/happendb/proto/gen/go/happendb/store/v1";
 
-service WriteOnlyService {
-  rpc Append(AppendRequest) returns (AppendResponse) {}
+service WriterService {
+  rpc Append(AppendRequest) returns (AppendResponse) {
+    option (google.api.http) = {
+      post: "/v1/append"
+      body: "*"
+    };
+  }
 }
 
 message AppendRequest {
@@ -16,4 +22,6 @@ message AppendRequest {
   repeated happendb.messaging.v1.Event events = 3;
 }
 
-message AppendResponse {}
+message AppendResponse {
+  uint64 stream_version = 1;
+}

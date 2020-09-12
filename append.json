@@ -1,0 +1,48 @@
+{
+  "stream_name": "dns.zone",
+  "expected_version": 1,
+  "events": [
+    {
+      "id": "52a9c185-64bb-4efd-acf0-4ff2a08b3c4e",
+      "type": "dns.Zone",
+      "payload": {
+        "id": 57,
+        "first_name": "Orton",
+        "last_name": "Gotcher",
+        "email": "ogotcher1h@mozilla.com",
+        "ip_address": "247.175.206.166"
+      },
+      "metadata": {},
+      "version": 0,
+      "time": "2020-09-11T20:27:35+00:00"
+    },
+    {
+      "id": "c7b554bd-a84e-463c-9c6a-4aedcce0a4ba",
+      "type": "dns.Zone",
+      "payload": {
+        "id": 57,
+        "first_name": "Orton",
+        "last_name": "Gotcher",
+        "email": "ogotcher1h@mozilla.com",
+        "ip_address": "247.175.206.166"
+      },
+      "metadata": {},
+      "version": 1,
+      "time": "2020-09-11T21:27:35+00:00"
+    },
+    {
+      "id": "fb6d4b2c-0772-410a-8909-99d6103e4760",
+      "type": "dns.Zone",
+      "payload": {
+        "id": 57,
+        "first_name": "Orton",
+        "last_name": "Gotcher",
+        "email": "ogotcher1h@mozilla.com",
+        "ip_address": "247.175.206.166"
+      },
+      "metadata": {},
+      "version": 2,
+      "time": "2020-09-11T22:27:35+00:00"
+    }
+  ]
+}

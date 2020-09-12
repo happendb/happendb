@@ -1,12 +1,12 @@
 package store
 
-// Driver ...
 type Driver interface {
-	AsyncReaderStore
-	SyncReaderStore
-	WriteOnlyStore
+	AsyncReader
+	SyncReader
+	Writer
 
-	StreamExists(name string) (bool, error)
+	StreamExists(name string) bool
+	GetStream(name string) *Stream
 	CreateStream(name string) (*Stream, error)
 	DeleteStream(name string) error
 }
