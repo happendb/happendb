@@ -5,9 +5,10 @@ agent:
     type: e1-standard-2
     os_image: ubuntu1804
 blocks:
-  - name: Hello world
+  - name: sem-version
     task:
       jobs:
-        - name: Run Go
+        - name: Using sem-version
           commands:
+            - sem-version go 1.9
             - go version
