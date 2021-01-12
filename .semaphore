@@ -1,0 +1,13 @@
+version: v1.0
+name: happendb
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Hello world
+    task:
+      jobs:
+        - name: Run Go
+          commands:
+            - go version
